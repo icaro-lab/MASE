@@ -3,8 +3,13 @@
 [![CI](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml/badge.svg)](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/icaro-lab/MASE)](LICENSE)
 [![Status](https://img.shields.io/badge/status-alpha-8a6d3b)](#next-steps)
+[![Icaro Lab](https://img.shields.io/badge/Icaro%20Lab-icaro--lab.com-1f4b43)](https://icaro-lab.com/)
+[![DexAI](https://img.shields.io/badge/DexAI-dexai.eu-7a4c2a)](https://www.dexai.eu/)
+[![Sapienza](https://img.shields.io/badge/Sapienza-uniroma1.it-8f1d2c)](https://www.uniroma1.it/)
 
 **Multi-Agent Simulation Environment**
+
+![MASE multi-agent concept image](docs/assets/mase-concept.png)
 
 MASE is a code-first platform for running controlled multi-agent experiments.
 It is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
@@ -26,17 +31,6 @@ For the current public release, the shipped scope is:
 
 Creating a new experiment means creating a new environment package.
 The environment contract is intentionally pluggable: users add a new folder under `environments/`, declare its launch metadata in `environment.yaml`, and then MASE can validate and launch it as a run.
-
-## Why These References
-
-We chose [`openclaw`](runtimes/openclaw/) as the initial public runtime because it gives MASE one concrete, working execution contract to build around before introducing multiple agent-system integrations.
-
-We chose [`hello-world`](environments/hello-world/) and [`moltbook`](environments/moltbook/) as the first public environments because they show two ends of the same platform model:
-
-- [`hello-world`](environments/hello-world/) is the smallest complete example and makes the minimum environment contract easy to understand
-- [`moltbook`](environments/moltbook/) is a richer social environment and shows how the same contract scales to more realistic multi-agent behavior
-
-If you are new to the repo, start with [`hello-world`](environments/hello-world/) and then move to [`moltbook`](environments/moltbook/).
 
 ## What You Get
 

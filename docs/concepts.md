@@ -31,7 +31,7 @@ An environment owns:
 - optional run hooks
 - optional analysis or export code
 
-The repo currently ships one public environment, `moltbook`, but the platform launch path is environment-generic.
+The repo currently ships two public environments, `hello-world` and `moltbook`, but the platform launch path is environment-generic.
 
 ## Population
 
