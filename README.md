@@ -9,7 +9,7 @@
 
 **Multi-Agent Simulation Environment**
 
-![MASE multi-agent concept image](docs/assets/mase-concept.png)
+![MASE multi-agent concept image](docs/assets/mase-concept.jpg)
 
 MASE is a code-first platform for running controlled multi-agent experiments.
 It is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
