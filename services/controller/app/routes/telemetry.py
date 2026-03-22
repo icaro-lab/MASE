@@ -45,7 +45,7 @@ class TelemetryEvent(BaseModel):
     source: str = Field(..., pattern="^(agent|system)$", description="Event source")
     action_category: str = Field(
         ...,
-        pattern="^(Self|Environmental|System|Institutional)$",
+        pattern="^(Self|Environmental|System)$",
         description="Action category",
     )
     action_type: str = Field(..., description="Action type")

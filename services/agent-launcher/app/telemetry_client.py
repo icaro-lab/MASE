@@ -42,7 +42,6 @@ class ActionCategory(str, Enum):
     SELF = "Self"
     ENVIRONMENTAL = "Environmental"
     SYSTEM = "System"
-    INSTITUTIONAL = "Institutional"
 
 
 class EventSource(str, Enum):

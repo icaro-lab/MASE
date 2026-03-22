@@ -510,7 +510,7 @@ class RunLauncher:
         # Note: We don't include compose/core.yml here because core services
         # (orchestrator, postgres, redis, etc.) are already running as part
         # of the platform. Per-run stacks only need the environment, agents,
-        # and optional institutional AI services.
+        # and optional environment frontends.
         
         launch_config = self.resolve_environment_launch(config.environment_id)
         environment_service = launch_config["environment_service"]

@@ -281,7 +281,7 @@ async def stream_run_events(
         run_id: Run identifier
         agent_id: Filter by agent ID
         source: Filter by source (agent, system)
-        action_category: Filter by category (Self, Environmental, System, Institutional)
+        action_category: Filter by category (Self, Environmental, System)
         action_type: Filter by action type
         skill_name: Filter by skill name
         success_only: Only return successful events
