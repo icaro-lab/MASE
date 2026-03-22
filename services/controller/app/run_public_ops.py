@@ -1144,7 +1144,7 @@ async def stop_run(run_id: str, *, db: Session):
             detail=f"Run {run_id} is not stoppable from status {run.status}",
         )
 
-    stop_result = run_launcher.stop_run(run_id, institutional_mode=run.institutional_mode)
+    stop_result = run_launcher.stop_run(run_id)
     if stop_result.get("status") != "success":
         status = str(stop_result.get("status") or "").strip().lower()
         error_text = str(stop_result.get("error") or "").lower()
@@ -1220,7 +1220,6 @@ async def restart_run_stack(run_id: str, *, db: Session) -> RunStackRestartRespo
     health_result = await run_launcher.wait_for_run_services(
         run_id=run.run_id,
         environment_id=environment_id,
-        institutional_mode=bool(run.institutional_mode),
         timeout=settings.health_check_timeout,
         interval=settings.health_check_interval,
     )
@@ -1229,7 +1228,6 @@ async def restart_run_stack(run_id: str, *, db: Session) -> RunStackRestartRespo
         await asyncio.to_thread(
             run_launcher.stop_run,
             run.run_id,
-            institutional_mode=bool(run.institutional_mode),
         )
         raise HTTPException(
             status_code=503,
@@ -1259,7 +1257,7 @@ async def delete_run(run_id: str, *, db: Session) -> None:
             detail=f"Run {run_id} must be stopped before deletion (current: {run.status})",
         )
 
-    delete_result = run_launcher.delete_run(run_id, institutional_mode=run.institutional_mode)
+    delete_result = run_launcher.delete_run(run_id)
     if delete_result.get("status") != "success":
         logger.warning(
             "delete_run container_delete_failed run_id=%s error=%s",

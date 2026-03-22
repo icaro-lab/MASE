@@ -37,7 +37,6 @@ class RunCreateRequest(BaseModel):
     environment_id: str
     seed: int | None = None
     api_key: str | None = None
-    institutional_mode: bool = False
     params: dict[str, Any] = Field(default_factory=dict)
     population_overrides: dict[str, PopulationOverride] = Field(default_factory=dict)
 
@@ -148,7 +147,6 @@ def _normalize_run_binding(run: RunDB, db: Session) -> dict[str, Any]:
             "max_heartbeats_per_agent": env_config.get("max_heartbeats_per_agent"),
             "runtime_limit_minutes": env_config.get("runtime_limit_minutes"),
         },
-        "institutional_mode": bool(run.institutional_mode),
         "seed": run.seed,
     }
     snapshot_hash = str(context.get("snapshot_hash") or "").strip()
@@ -368,7 +366,6 @@ def _build_environment_config(
             "max_heartbeats_per_agent": env_config.get("max_heartbeats_per_agent"),
             "runtime_limit_minutes": env_config.get("runtime_limit_minutes"),
         },
-        "institutional_mode": bool(request.institutional_mode),
         "seed": request.seed,
     }
     if "experiment_policy" in env_config:
@@ -409,7 +406,6 @@ async def create_run(request: RunCreateRequest, db: Session = Depends(get_db)) -
         environment_config=env_config,
         snapshot=snapshot,
         request=LegacyRunCreate(
-            institutional_mode=request.institutional_mode,
             seed=request.seed,
             api_key=request.api_key,
         ),
@@ -507,58 +503,6 @@ async def get_run_snapshot(run_id: str, db: Session = Depends(get_db)) -> RunSna
 @router.get("/runs/{run_id}/cost")
 async def get_run_cost(run_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
     return await run_compat.get_run_cost(run_id, db=db)
-
-
-@router.get("/runs/{run_id}/compass-review")
-async def get_run_compass_review(
-    run_id: str,
-    history_limit: int = Query(1000, ge=1, le=5000),
-    event_limit: int = Query(100, ge=0, le=500),
-    db: Session = Depends(get_db),
-) -> dict[str, Any]:
-    return await run_compat.get_run_compass_review(
-        run_id,
-        history_limit=history_limit,
-        event_limit=event_limit,
-        db=db,
-    )
-
-
-@router.get("/runs/{run_id}/condition-manifest")
-async def get_run_condition_manifest(
-    run_id: str,
-    mode: str = Query("strict"),
-    db: Session = Depends(get_db),
-) -> dict[str, Any]:
-    return await run_compat.get_run_condition_manifest(run_id, mode=mode, db=db)
-
-
-@router.get("/runs/{run_id}/condition-manifest.csv")
-async def get_run_condition_manifest_csv(
-    run_id: str,
-    mode: str = Query("strict"),
-    db: Session = Depends(get_db),
-):
-    return await run_compat.get_run_condition_manifest_csv(run_id, mode=mode, db=db)
-
-
-@router.get("/runs/{run_id}/agent-context")
-async def get_run_agent_context(
-    run_id: str,
-    limit_per_agent: int = Query(20, ge=5, le=120),
-    db: Session = Depends(get_db),
-) -> dict[str, Any]:
-    return await run_compat.get_run_agent_context(run_id, limit_per_agent=limit_per_agent, db=db)
-
-
-@router.get("/runs/{run_id}/agents/{agent_id}/context-export")
-async def export_agent_context(
-    run_id: str,
-    agent_id: str,
-    tick: int | None = Query(default=None, ge=0),
-    db: Session = Depends(get_db),
-) -> dict[str, Any]:
-    return await run_compat.export_agent_context(run_id, agent_id, tick=tick, db=db)
 
 
 @router.get("/runs/{run_id}/scheduler/status")

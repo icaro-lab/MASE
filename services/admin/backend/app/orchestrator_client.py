@@ -207,59 +207,6 @@ class ControllerClient:
         except httpx.ConnectError:
             raise RuntimeError("Controller unavailable")
 
-    async def get_run_compass_review(
-        self,
-        run_id: str,
-        history_limit: Optional[int] = None,
-        event_limit: Optional[int] = None,
-    ) -> dict:
-        """Get reviewer-friendly compass aggregation for a run."""
-        params: dict[str, int] = {}
-        if history_limit is not None:
-            params["history_limit"] = history_limit
-        if event_limit is not None:
-            params["event_limit"] = event_limit
-        return await self._request_controller(
-            "GET",
-            f"/api/v1/runs/{run_id}/compass-review",
-            params=params or None,
-        )
-
-    async def get_run_condition_manifest(self, run_id: str, mode: Optional[str] = None) -> dict:
-        """Get canonical condition manifest JSON for a run."""
-        params = {"mode": mode} if mode else None
-        return await self._request_controller(
-            "GET",
-            f"/api/v1/runs/{run_id}/condition-manifest",
-            params=params,
-        )
-
-    async def get_run_condition_manifest_csv(self, run_id: str, mode: Optional[str] = None) -> dict:
-        """Get condition manifest CSV for a run."""
-        client = await self._get_client()
-        params = {"mode": mode} if mode else None
-
-        try:
-            response = await client.get(
-                f"{self.base_url}/api/v1/runs/{run_id}/condition-manifest.csv",
-                params=params,
-            )
-        except httpx.ConnectError:
-            raise RuntimeError("Controller unavailable")
-        except httpx.TimeoutException:
-            raise RuntimeError("Controller request timed out")
-
-        if response.status_code >= 400:
-            raise ControllerProxyError(
-                status_code=response.status_code,
-                detail=self._extract_response_detail(response),
-            )
-
-        return {
-            "content": response.text,
-            "content_disposition": response.headers.get("content-disposition"),
-        }
-
     async def get_governance_snapshot(
         self,
         run_limit: Optional[int] = None,
@@ -289,40 +236,6 @@ class ControllerClient:
         except httpx.ConnectError:
             raise RuntimeError("Controller unavailable")
 
-    async def get_run_agent_context(self, run_id: str, limit_per_agent: int = 20) -> dict:
-        """Get explainability context for agents in a run."""
-        client = await self._get_client()
-
-        try:
-            response = await client.get(
-                f"{self.base_url}/api/v1/runs/{run_id}/agent-context",
-                params={"limit_per_agent": limit_per_agent},
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"Controller error: {e.response.text}")
-        except httpx.ConnectError:
-            raise RuntimeError("Controller unavailable")
-
-    async def export_agent_context(self, run_id: str, agent_id: str, tick: Optional[int] = None) -> dict:
-        """Export model-facing context chain for one agent up to tick N."""
-        client = await self._get_client()
-        params = {}
-        if tick is not None:
-            params["tick"] = tick
-        try:
-            response = await client.get(
-                f"{self.base_url}/api/v1/runs/{run_id}/agents/{agent_id}/context-export",
-                params=params,
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.HTTPStatusError as e:
-            raise RuntimeError(f"Controller error: {e.response.text}")
-        except httpx.ConnectError:
-            raise RuntimeError("Controller unavailable")
-    
     async def stop_run(self, run_id: str) -> dict:
         """Stop a specific run."""
         safe_id = self._encode(run_id)

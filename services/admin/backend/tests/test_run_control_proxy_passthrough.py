@@ -54,11 +54,6 @@ class _RaisingController:
             raise self.exc
         return {"status": "noop"}
 
-    async def get_run_condition_manifest(self, run_id: str, mode: str = "strict") -> dict[str, Any]:
-        if self.method_name == "get_run_condition_manifest":
-            raise self.exc
-        return {"run_id": run_id, "source": "native"}
-
     async def close(self) -> None:
         self.closed = True
 
@@ -218,7 +213,6 @@ def test_list_runs_uses_environment_filter(monkeypatch: pytest.MonkeyPatch) -> N
     assert captured["path"] == "/api/v1/runs"
     assert captured["kwargs"]["params"] == {"environment_id": "moltbook", "status": "running"}
 
-
 def test_get_run_snapshot_uses_snapshot_path(monkeypatch: pytest.MonkeyPatch) -> None:
     client = ControllerClient(_Settings())
     captured: dict[str, Any] = {}
@@ -236,131 +230,3 @@ def test_get_run_snapshot_uses_snapshot_path(monkeypatch: pytest.MonkeyPatch) ->
     assert result["snapshot_hash"] == "sha256:abc"
     assert captured["method"] == "GET"
     assert captured["path"] == "/api/v1/runs/run-1/snapshot"
-
-
-def test_get_run_condition_manifest_uses_controller_path_and_mode(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client = ControllerClient(_Settings())
-    captured: dict[str, Any] = {}
-
-    async def _fake_request(method: str, path: str, **kwargs: Any) -> dict[str, Any]:
-        captured["method"] = method
-        captured["path"] = path
-        captured["kwargs"] = kwargs
-        return {"run_id": "run-1", "source": "native"}
-
-    monkeypatch.setattr(client, "_request_controller", _fake_request)
-
-    result = _run(client.get_run_condition_manifest("run-1", mode="best_effort"))
-
-    assert result["run_id"] == "run-1"
-    assert captured["method"] == "GET"
-    assert captured["path"] == "/api/v1/runs/run-1/condition-manifest"
-    assert captured["kwargs"]["params"] == {"mode": "best_effort"}
-
-
-def test_get_run_condition_manifest_csv_returns_content_and_disposition(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client = ControllerClient(_Settings())
-
-    class _FakeHttpClient:
-        async def get(self, url: str, params: Any = None) -> httpx.Response:
-            assert url.endswith("/api/v1/runs/run-1/condition-manifest.csv")
-            assert params == {"mode": "strict"}
-            return httpx.Response(
-                status_code=200,
-                text="run_id,source\nrun-1,native\n",
-                headers={"content-disposition": 'attachment; filename="run-1-condition-manifest.csv"'},
-            )
-
-    async def _fake_get_client() -> _FakeHttpClient:
-        return _FakeHttpClient()
-
-    monkeypatch.setattr(client, "_get_client", _fake_get_client)
-
-    result = _run(client.get_run_condition_manifest_csv("run-1", mode="strict"))
-
-    assert result["content"].startswith("run_id,source")
-    assert "condition-manifest.csv" in (result["content_disposition"] or "")
-
-
-def test_admin_route_condition_manifest_csv_wraps_proxy_result() -> None:
-    class _Controller:
-        def __init__(self) -> None:
-            self.closed = False
-
-        async def get_run_condition_manifest_csv(self, run_id: str, mode: str = "strict") -> dict[str, Any]:
-            assert run_id == "run-1"
-            assert mode == "best_effort"
-            return {
-                "content": "run_id,source\nrun-1,backfill\n",
-                "content_disposition": 'attachment; filename="run-1-condition-manifest.csv"',
-            }
-
-        async def close(self) -> None:
-            self.closed = True
-
-    controller = _Controller()
-
-    response = _run(
-        v1.get_run_condition_manifest_csv(
-            "run-1",
-            mode="best_effort",
-            controller=controller,  # type: ignore[arg-type]
-        )
-    )
-
-    assert response.media_type == "text/csv"
-    assert response.headers["content-disposition"].endswith("condition-manifest.csv\"")
-    assert response.body.decode("utf-8").startswith("run_id,source")
-    assert controller.closed is True
-
-
-def test_admin_route_condition_manifest_json_wraps_proxy_result() -> None:
-    class _Controller:
-        def __init__(self) -> None:
-            self.closed = False
-
-        async def get_run_condition_manifest(self, run_id: str, mode: str = "strict") -> dict[str, Any]:
-            assert run_id == "run-1"
-            assert mode == "best_effort"
-            return {"run_id": "run-1", "source": "backfill"}
-
-        async def close(self) -> None:
-            self.closed = True
-
-    controller = _Controller()
-
-    payload = _run(
-        v1.get_run_condition_manifest(
-            "run-1",
-            mode="best_effort",
-            controller=controller,  # type: ignore[arg-type]
-        )
-    )
-
-    assert payload["run_id"] == "run-1"
-    assert payload["source"] == "backfill"
-    assert controller.closed is True
-
-
-def test_admin_route_condition_manifest_json_preserves_proxy_status() -> None:
-    controller = _RaisingController(
-        "get_run_condition_manifest",
-        ControllerProxyError(409, {"code": "condition_manifest_unavailable"}),
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        _run(
-            v1.get_run_condition_manifest(
-                "run-1",
-                mode="strict",
-                controller=controller,  # type: ignore[arg-type]
-            )
-        )
-
-    assert exc_info.value.status_code == 409
-    assert exc_info.value.detail == {"code": "condition_manifest_unavailable"}
-    assert controller.closed is True

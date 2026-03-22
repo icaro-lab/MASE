@@ -66,7 +66,6 @@ def _seed_run_with_binding(session_factory) -> str:
             run_id="run-public-1",
             resolved_bundle_hash="sha256:bundle",
             status="running",
-            institutional_mode=False,
             started_at=datetime(2026, 3, 22, 10, 0, 0, tzinfo=timezone.utc),
         )
         session.add(run)

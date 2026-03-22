@@ -166,7 +166,6 @@ class CreateAgentRequest(BaseModel):
     heartbeat: Optional[str] = Field(None, description="Content for HEARTBEAT.md")
     environment_url: Optional[str] = Field(None, description="Primary environment URL used for runtime package rendering")
     environment_name: Optional[str] = Field(None, description="Environment name for skill bootstrap (e.g., 'myenv')")
-    institutional_mode: bool = Field(False, description="Use institutional mode skill file")
 
 class CreateAgentResponse(BaseModel):
     """Response model for agent creation."""
@@ -1205,7 +1204,7 @@ async def _create_agent_from_request(request: CreateAgentRequest) -> CreateAgent
     initial_content = _build_create_agent_initial_content(request)
 
     print(f"[DEBUG] Creating agent directory with content files: {list(initial_content.keys())}")
-    print(f"[DEBUG] Environment name: {request.environment_name}, Institutional mode: {request.institutional_mode}")
+    print(f"[DEBUG] Environment name: {request.environment_name}")
 
     effective_environment_url = request.environment_url or settings.environment_url
 
@@ -1217,7 +1216,6 @@ async def _create_agent_from_request(request: CreateAgentRequest) -> CreateAgent
         agent_name=request.agent_name or request.agent_id,
         environment_url=effective_environment_url,
         environment_name=request.environment_name,
-        institutional_mode=request.institutional_mode
     )
     if not create_result.get("created"):
         detail = str(create_result.get("error") or "Failed to create agent directory")

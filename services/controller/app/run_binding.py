@@ -80,7 +80,6 @@ def build_run_context(run: RunDB, db: Session) -> dict[str, Any]:
                 "max_heartbeats_per_agent": environment_config.get("max_heartbeats_per_agent"),
                 "runtime_limit_minutes": environment_config.get("runtime_limit_minutes"),
             },
-            "institutional_mode": bool(getattr(run, "institutional_mode", False)),
             "seed": getattr(run, "seed", None),
         }
     snapshot_hash = _normalize_text(getattr(binding, "snapshot_hash", None)) or (

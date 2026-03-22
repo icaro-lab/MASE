@@ -680,7 +680,6 @@ async def init_agent_filesystem(
     runtime_content_hash: Optional[str] = None,
     environment_url: Optional[str] = None,
     environment_name: Optional[str] = None,
-    institutional_mode: bool = False,
     agents: Optional[str] = None,
     identity: Optional[str] = None,
     soul: Optional[str] = None,
@@ -699,7 +698,6 @@ async def init_agent_filesystem(
         "runtime_content_hash": runtime_content_hash,
         "environment_url": environment_url,
         "environment_name": environment_name,
-        "institutional_mode": institutional_mode,
         "agents": agents,
         "identity": identity,
         "soul": soul,
@@ -738,7 +736,6 @@ async def init_agents_filesystem_batch(
     run_id: str,
     environment_url: Optional[str] = None,
     environment_name: Optional[str] = None,
-    institutional_mode: bool = False,
     concurrency: int = 10,
     timeout_seconds: float = 600.0,
 ) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
@@ -757,7 +754,6 @@ async def init_agents_filesystem_batch(
                 "runtime_content_hash": spec.runtime_content_hash,
                 "environment_url": environment_url,
                 "environment_name": environment_name,
-                "institutional_mode": institutional_mode,
                 "agents": spec.agents,
                 "identity": spec.identity,
                 "soul": spec.soul,
@@ -980,7 +976,6 @@ async def _initialize_agent_remote(
     run_id: str,
     environment_url: str,
     environment_name: str,
-    institutional_mode: bool,
     pre_register_agents: bool,
     init_timeout_seconds: float,
 ) -> AgentInitResult:
@@ -993,7 +988,6 @@ async def _initialize_agent_remote(
         runtime_content_hash=spec.runtime_content_hash,
         environment_url=environment_url,
         environment_name=environment_name,
-        institutional_mode=institutional_mode,
         agents=spec.agents,
         identity=spec.identity,
         soul=spec.soul,
@@ -1035,7 +1029,6 @@ async def run_bounded_agent_initialization(
     run_id: str,
     environment_url: str,
     environment_name: str,
-    institutional_mode: bool,
     pre_register_agents: bool,
     init_timeout_seconds: float,
 ) -> Tuple[List[AgentInitResult], List[str]]:
@@ -1052,7 +1045,6 @@ async def run_bounded_agent_initialization(
                         run_id=run_id,
                         environment_url=environment_url,
                         environment_name=environment_name,
-                        institutional_mode=institutional_mode,
                         pre_register_agents=pre_register_agents,
                         init_timeout_seconds=init_timeout_seconds,
                     )
@@ -1083,7 +1075,6 @@ async def run_bounded_agent_initialization(
         run_id=run_id,
         environment_url=environment_url,
         environment_name=environment_name,
-        institutional_mode=institutional_mode,
         concurrency=concurrency,
         timeout_seconds=init_timeout_seconds,
     )

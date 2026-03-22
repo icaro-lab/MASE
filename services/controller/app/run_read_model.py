@@ -106,7 +106,6 @@ def resolve_run_service_urls(run: RunDB, db: Session) -> dict[str, str]:
         return run_launcher.get_service_urls(
             run_id=run.run_id,
             environment_id=environment_id,
-            institutional_mode=bool(run.institutional_mode),
         )
     except Exception as exc:
         logger.warning(
@@ -132,7 +131,6 @@ def build_restart_launch_config(run: RunDB, db: Session) -> RunLaunchConfig:
     return RunLaunchConfig(
         run_id=run.run_id,
         environment_id=str(context.get("environment_id") or environment_id),
-        institutional_mode=bool(run.institutional_mode),
         seed=run.seed,
         resolved_bundle_hash=(
             str(getattr(run, "resolved_bundle_hash", "") or "").strip()
@@ -168,7 +166,6 @@ def build_run_response(
         environment_url=environment_url,
         frontend_url=frontend_url,
         status=RunStatus(run.status),
-        institutional_mode=run.institutional_mode,
         seed=run.seed,
         started_at=as_utc_datetime(run.started_at),
         ended_at=as_utc_datetime(run.ended_at),

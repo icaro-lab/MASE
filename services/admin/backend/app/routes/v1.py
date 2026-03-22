@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ..config import Settings, get_settings
 from ..orchestrator_client import ControllerProxyError, ControllerClient
@@ -165,64 +165,6 @@ async def get_run_cost(
         await controller.close()
 
 
-@router.get("/runs/{run_id}/compass-review")
-async def get_run_compass_review(
-    run_id: str,
-    history_limit: int = Query(1000, ge=1, le=5000),
-    event_limit: int = Query(100, ge=0, le=500),
-    controller: ControllerClient = Depends(get_controller),
-):
-    try:
-        return await controller.get_run_compass_review(
-            run_id,
-            history_limit=history_limit,
-            event_limit=event_limit,
-        )
-    except ControllerProxyError as exc:
-        _raise_proxy_error(exc)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    finally:
-        await controller.close()
-
-
-@router.get("/runs/{run_id}/condition-manifest")
-async def get_run_condition_manifest(
-    run_id: str,
-    mode: str = Query("strict", description="strict | best_effort"),
-    controller: ControllerClient = Depends(get_controller),
-):
-    try:
-        return await controller.get_run_condition_manifest(run_id, mode=mode)
-    except ControllerProxyError as exc:
-        _raise_proxy_error(exc)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    finally:
-        await controller.close()
-
-
-@router.get("/runs/{run_id}/condition-manifest.csv")
-async def get_run_condition_manifest_csv(
-    run_id: str,
-    mode: str = Query("strict", description="strict | best_effort"),
-    controller: ControllerClient = Depends(get_controller),
-):
-    try:
-        result = await controller.get_run_condition_manifest_csv(run_id, mode=mode)
-        headers: dict[str, str] = {}
-        disposition = result.get("content_disposition")
-        if isinstance(disposition, str) and disposition.strip():
-            headers["Content-Disposition"] = disposition
-        return Response(content=result.get("content", ""), media_type="text/csv", headers=headers)
-    except ControllerProxyError as exc:
-        _raise_proxy_error(exc)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    finally:
-        await controller.close()
-
-
 @router.get("/runs/{run_id}/scheduler/status")
 async def get_run_scheduler_status(
     run_id: str,
@@ -230,39 +172,6 @@ async def get_run_scheduler_status(
 ):
     try:
         return await controller.get_run_scheduler_status(run_id)
-    except ControllerProxyError as exc:
-        _raise_proxy_error(exc)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    finally:
-        await controller.close()
-
-
-@router.get("/runs/{run_id}/agent-context")
-async def get_run_agent_context(
-    run_id: str,
-    limit_per_agent: int = Query(20, ge=5, le=120),
-    controller: ControllerClient = Depends(get_controller),
-):
-    try:
-        return await controller.get_run_agent_context(run_id=run_id, limit_per_agent=limit_per_agent)
-    except ControllerProxyError as exc:
-        _raise_proxy_error(exc)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
-    finally:
-        await controller.close()
-
-
-@router.get("/runs/{run_id}/agents/{agent_id}/context-export")
-async def export_agent_context(
-    run_id: str,
-    agent_id: str,
-    tick: Optional[int] = Query(None, ge=0),
-    controller: ControllerClient = Depends(get_controller),
-):
-    try:
-        return await controller.export_agent_context(run_id=run_id, agent_id=agent_id, tick=tick)
     except ControllerProxyError as exc:
         _raise_proxy_error(exc)
     except RuntimeError as exc:

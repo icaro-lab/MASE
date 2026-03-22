@@ -292,12 +292,11 @@ def _render_placeholders(
     return rendered, seen
 
 
-def get_environment_skill_path(environment_name: str, institutional_mode: bool = False) -> Optional[Path]:
+def get_environment_skill_path(environment_name: str) -> Optional[Path]:
     """Get the path to the environment skill file.
     
     Args:
         environment_name: Name of the environment (e.g., "myenv")
-        institutional_mode: Whether to use institutional mode skill file
         
     Returns:
         Path to the skill file or None if not found
@@ -305,18 +304,10 @@ def get_environment_skill_path(environment_name: str, institutional_mode: bool =
     normalized_env = normalize_environment_name(environment_name)
     if not normalized_env:
         return None
-    
-    skill_filename = "inst_skill.md" if institutional_mode else "skill.md"
 
-    skill_path = ENVIRONMENT_PACKAGE_PATH / normalized_env / skill_filename
+    skill_path = ENVIRONMENT_PACKAGE_PATH / normalized_env / "skill.md"
     if skill_path.exists():
         return skill_path
-
-    if institutional_mode:
-        fallback_path = ENVIRONMENT_PACKAGE_PATH / normalized_env / "skill.md"
-        if fallback_path.exists():
-            return fallback_path
-
     return None
 
 
@@ -382,7 +373,6 @@ class AgentFilesystem:
         self,
         environment_name: str,
         environment_url: Optional[str] = None,
-        institutional_mode: bool = False
     ) -> Dict[str, Any]:
         """Bootstrap the environment skill during agent initialization.
         
@@ -391,14 +381,12 @@ class AgentFilesystem:
         
         Args:
             environment_name: Name of the environment (e.g., "myenv")
-            institutional_mode: Whether to use institutional mode skill file
             
         Returns:
             Dict with bootstrap result and metadata
         """
         result = {
             "environment": normalize_environment_name(environment_name),
-            "institutional_mode": institutional_mode,
             "success": False,
             "skill_path": None,
             "source_file": None,
@@ -411,7 +399,7 @@ class AgentFilesystem:
             result["error"] = "No environment name provided"
             return result
         
-        source_path = get_environment_skill_path(normalized_env, institutional_mode)
+        source_path = get_environment_skill_path(normalized_env)
         dest_dir = self.skills_path / normalized_env
         dest_dir.mkdir(parents=True, exist_ok=True)
         
@@ -466,7 +454,6 @@ class AgentFilesystem:
                     src
                     for src in sorted(env_dir.glob("*.md"))
                     if src.name != "skill.md"
-                    and src.name != "inst_skill.md"
                     and _canonical_skill_doc_name(src) in linked_names
                 ]
                 for src in companions:
@@ -643,7 +630,6 @@ Review the installed skills in `skills/{environment_name}/SKILL.md`.
         agent_name: Optional[str] = None,
         environment_url: Optional[str] = None,
         environment_name: Optional[str] = None,
-        institutional_mode: bool = False
     ) -> Dict[str, Any]:
         """Create agent directory structure with initial files.
         
@@ -669,7 +655,6 @@ Review the installed skills in `skills/{environment_name}/SKILL.md`.
             agent_name: Optional display name used for runtime package placeholder rendering
             environment_url: Optional primary environment URL used for placeholder rendering
             environment_name: Name of the environment for skill bootstrap
-            institutional_mode: Whether to use institutional mode skill file
             
         Returns:
             Dict with creation result and bootstrap info
@@ -876,7 +861,6 @@ Review the installed skills in `skills/{environment_name}/SKILL.md`.
             bootstrap_result = await self.bootstrap_environment_skill(
                 environment_name=environment_name,
                 environment_url=environment_url,
-                institutional_mode=institutional_mode
             )
             result["environment_bootstrap"] = bootstrap_result
             
@@ -889,7 +873,6 @@ Review the installed skills in `skills/{environment_name}/SKILL.md`.
             print(f"[DEBUG] Skipping environment skill bootstrap for {environment_name} due to runtime config")
             result["environment_bootstrap"] = {
                 "environment": normalize_environment_name(environment_name),
-                "institutional_mode": institutional_mode,
                 "success": True,
                 "skipped": True,
                 "skill_path": None,

@@ -205,7 +205,6 @@ def _resolve_agent_launcher_url(run_id: str, db: Optional[Session] = None) -> st
                 service_urls = run_launcher.get_service_urls(
                     run_id=run.run_id,
                     environment_id=environment_id,
-                    institutional_mode=bool(getattr(run, "institutional_mode", False)),
                 )
                 candidate = str(service_urls.get("agent_worker") or "").strip()
                 if candidate:
@@ -336,7 +335,6 @@ async def _enforce_cost_limits_for_runs(db: Session, run_ids: Set[str]) -> None:
                 await asyncio.to_thread(
                     run_launcher.stop_run,
                     run_id,
-                    institutional_mode=run.institutional_mode,
                 )
             except Exception as exc:
                 logger.warning("Budget stop failed for run %s: %s", run_id, exc)

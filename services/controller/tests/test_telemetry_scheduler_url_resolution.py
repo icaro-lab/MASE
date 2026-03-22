@@ -37,10 +37,7 @@ class _FakeDb:
 def test_resolve_agent_launcher_url_prefers_descriptor_service_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    run = types.SimpleNamespace(
-        run_id="run-1",
-        institutional_mode=False,
-    )
+    run = types.SimpleNamespace(run_id="run-1")
     db = _FakeDb(run)
 
     monkeypatch.setattr(
@@ -51,7 +48,7 @@ def test_resolve_agent_launcher_url_prefers_descriptor_service_url(
     monkeypatch.setattr(
         telemetry.run_launcher,
         "get_service_urls",
-        lambda run_id, environment_id, institutional_mode=False: {
+        lambda run_id, environment_id: {
             "agent_worker": f"http://{environment_id}-agents-{run_id}:8000"
         },
     )
@@ -66,10 +63,7 @@ def test_resolve_agent_launcher_url_prefers_descriptor_service_url(
 def test_resolve_agent_launcher_url_uses_environment_aware_settings_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    run = types.SimpleNamespace(
-        run_id="run-2",
-        institutional_mode=False,
-    )
+    run = types.SimpleNamespace(run_id="run-2")
     db = _FakeDb(run)
 
     monkeypatch.setattr(

@@ -124,7 +124,7 @@ test_step "Orchestrator health" "curl -sf http://localhost:${ORCHESTRATOR_PORT}/
 echo ""
 echo "3. Run Baseline Enforcement"
 echo "---------------------------"
-test_step "No deprecated extra-service container is running for this worktree" "! docker ps --format '{{.Names}} {{.Labels}}' | grep -F \"$(run_project_pattern)\" | grep -Eq '(inst-ai|compass)'"
+test_step "No deprecated extra-service container is running for this stack" "! docker ps --format '{{.Names}} {{.Labels}}' | grep -F \"$(run_project_pattern)\" | grep -Eq '(inst-ai|compass)'"
 
 echo ""
 echo "4. Environment Contract"

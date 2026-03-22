@@ -15,13 +15,8 @@ app.use('/api', backendProxy);
 // Proxy root platform metrics endpoint to backend
 app.use('/metrics', backendProxy);
 
-// Proxy platform compatibility endpoints used directly by the compass page.
+// Proxy platform compatibility endpoints exposed directly by the environment shell.
 for (const path of [
-  '/compass/status',
-  '/compass/instrument',
-  '/compass/review',
-  '/compass/history',
-  '/compass/submit',
   '/contract',
   '/health',
   '/journal',

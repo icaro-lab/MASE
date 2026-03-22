@@ -64,7 +64,6 @@ class Run(Base):
 
     run_id = Column(String(36), primary_key=True, default=generate_uuid, nullable=False)
     resolved_bundle_hash = Column(String(80), nullable=True, index=True)
-    institutional_mode = Column(Boolean, default=False, nullable=False)
     seed = Column(Integer, nullable=True)
     experiment_policy_json = Column(JSON, nullable=True)
     experiment_policy_hash = Column(String(80), nullable=True, index=True)

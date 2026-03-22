@@ -204,15 +204,6 @@ export const runApi = {
     }
   },
 
-  getAgentContext: async (runId, params = {}) => {
-    try {
-      const response = await api.get(`/v1/runs/${runId}/agent-context`, { params });
-      return response.data;
-    } catch (error) {
-      handleError(error);
-    }
-  },
-
   stop: async (runId) => {
     try {
       const response = await api.post(`/v1/runs/${runId}/stop`);

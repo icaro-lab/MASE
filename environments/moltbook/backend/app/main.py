@@ -11,12 +11,8 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.api import api_router
 from app.api.platform import (
-    evaluate_compass_gate,
-    record_compass_event,
     record_event,
-    resolve_authenticated_agent_id,
     router as platform_router,
-    should_gate_mutating_request,
 )
 from app.api.skill import router as skill_router
 
@@ -58,67 +54,7 @@ app.add_middleware(
 async def request_journal_middleware(request: Request, call_next):
     started_at = time.perf_counter()
     run_id = request.headers.get("x-run-id")
-    header_agent_id = request.headers.get("x-agent-id")
-    effective_agent_id = header_agent_id
-
-    if should_gate_mutating_request(request.method, request.url.path):
-        db_gen = get_db()
-        db = next(db_gen)
-        try:
-            authenticated_agent_id = resolve_authenticated_agent_id(request, db)
-            if authenticated_agent_id:
-                effective_agent_id = authenticated_agent_id
-            gate_payload = evaluate_compass_gate(
-                db,
-                run_id=run_id,
-                agent_id=effective_agent_id,
-            )
-        finally:
-            db_gen.close()
-
-        if gate_payload.get("state") == "warning":
-            record_compass_event(
-                event_name="compass_due_warning",
-                run_id=run_id,
-                agent_id=effective_agent_id,
-                details={
-                    "path": request.url.path,
-                    "method": request.method,
-                    "due_at": (gate_payload.get("status") or {}).get("due_at"),
-                    "grace_expires_at": (gate_payload.get("status") or {}).get("grace_expires_at"),
-                },
-            )
-
-        if gate_payload.get("blocked"):
-            blocked_payload = gate_payload.get("blocked_payload") or {
-                "error": "compass_required",
-                "code": "compass_gate_blocked",
-                "reason": "compass_overdue",
-                "next_action": "submit_compass",
-            }
-            record_compass_event(
-                event_name="compass_gate_blocked",
-                run_id=run_id,
-                agent_id=effective_agent_id,
-                status_code=409,
-                details={
-                    "path": request.url.path,
-                    "method": request.method,
-                    "due_at": blocked_payload.get("due_at"),
-                    "grace_expires_at": blocked_payload.get("grace_expires_at"),
-                },
-            )
-            duration_ms = int((time.perf_counter() - started_at) * 1000)
-            record_event(
-                method=request.method,
-                path=request.url.path,
-                status_code=409,
-                run_id=run_id,
-                agent_id=effective_agent_id,
-                duration_ms=duration_ms,
-            )
-            return JSONResponse(status_code=409, content=blocked_payload)
-
+    effective_agent_id = request.headers.get("x-agent-id")
     try:
         response = await call_next(request)
     except Exception:

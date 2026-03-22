@@ -25,7 +25,6 @@ class RunLaunchConfig(BaseModel):
 
     run_id: str = Field(..., description="Run identifier")
     environment_id: str = Field(..., description="Environment identifier")
-    institutional_mode: bool = Field(default=False, description="Reserved; public v1 launches do not include extra services")
     seed: Optional[int] = Field(None, description="Random seed")
     resolved_bundle_hash: Optional[str] = Field(None, description="Bundle hash")
     api_key: Optional[str] = Field(None, description="LLM API key for agents")
@@ -106,7 +105,7 @@ class RunLauncher:
 
     @classmethod
     def get_runtime_namespace(cls) -> str:
-        """Get the worktree/runtime namespace used for deterministic launch assets."""
+        """Get the runtime namespace used for deterministic launch assets."""
         raw = str(
             os.getenv("COMPOSE_PROJECT_NAME")
             or os.getenv("MASE_NETWORK_NAME")
@@ -379,15 +378,12 @@ class RunLauncher:
         self,
         run_id: str,
         environment_id: Optional[str] = None,
-        institutional_mode: bool = False,
     ) -> Dict[str, str]:
         """Get service URLs for a run.
 
         Args:
             run_id: Run identifier
             environment_id: Environment identifier
-            institutional_mode: Whether institutional AI is enabled
-
         Returns:
             Dictionary of service names to URLs
         """
@@ -622,7 +618,6 @@ class RunLauncher:
         self,
         run_id: str,
         environment_id: Optional[str] = None,
-        institutional_mode: bool = False,
         timeout: int = 120,
         interval: float = 2.0
     ) -> Dict:
@@ -634,7 +629,6 @@ class RunLauncher:
         Args:
             run_id: Run identifier
             environment_id: Environment identifier
-            institutional_mode: Whether institutional AI is enabled
             timeout: Timeout in seconds for all services
             interval: Polling interval in seconds
 
@@ -642,7 +636,7 @@ class RunLauncher:
             Health check results for all services
         """
         resolved_environment_id = str(environment_id or settings.get_default_environment_id()).strip()
-        service_urls = self.get_service_urls(run_id, resolved_environment_id, institutional_mode)
+        service_urls = self.get_service_urls(run_id, resolved_environment_id)
         results = {}
         launch_config = self.resolve_environment_launch(resolved_environment_id)
 
@@ -756,13 +750,11 @@ class RunLauncher:
             service_urls = self.get_service_urls(
                 config.run_id,
                 config.environment_id,
-                config.institutional_mode,
             )
             
             launch_result = {
                 "status": "launched",
                 "run_id": config.run_id,
-                "institutional_mode": config.institutional_mode,
                 "override_file": override_file,
                 "orchestrator_response": result,
                 "launched_at": datetime.utcnow().isoformat(),
@@ -779,13 +771,11 @@ class RunLauncher:
                 "stage": "launch"
             }
 
-    def stop_run(self, run_id: str, institutional_mode: bool = False) -> Dict:
+    def stop_run(self, run_id: str) -> Dict:
         """Stop a run via the orchestrator service.
 
         Args:
             run_id: Run identifier
-            institutional_mode: Whether institutional AI was enabled
-
         Returns:
             Stop result
         """
@@ -824,15 +814,13 @@ class RunLauncher:
                 "stage": "stop"
             }
 
-    def delete_run(self, run_id: str, institutional_mode: bool = False) -> Dict:
+    def delete_run(self, run_id: str) -> Dict:
         """Delete a run via the orchestrator service.
 
         This stops and removes containers (unlike stop_run which only stops them).
 
         Args:
             run_id: Run identifier
-            institutional_mode: Whether institutional AI was enabled
-
         Returns:
             Delete result
         """

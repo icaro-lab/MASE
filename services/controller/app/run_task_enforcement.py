@@ -406,7 +406,7 @@ def schedule_run_runtime_limit_task(
                         now_utc = datetime.now(timezone.utc)
                         elapsed_seconds = int(max((now_utc - started_at_utc).total_seconds(), 0.0))
 
-                stop_result = run_launcher.stop_run(run_id, institutional_mode=bool(run.institutional_mode))
+                stop_result = run_launcher.stop_run(run_id)
                 if stop_result.get("status") != "success" and stop_result.get("status") != "not_found":
                     error_message = stop_result.get("error", "Unknown error")
                     logger.error(
@@ -506,7 +506,7 @@ def schedule_run_max_tick_task(
                     if tick_count < int(max_ticks):
                         continue
 
-                    stop_result = run_launcher.stop_run(run_id, institutional_mode=bool(run.institutional_mode))
+                    stop_result = run_launcher.stop_run(run_id)
                     if stop_result.get("status") != "success" and stop_result.get("status") != "not_found":
                         error_message = stop_result.get("error", "Unknown error")
                         run.status = RunStatusEnum.FAILED.value
@@ -609,7 +609,7 @@ def schedule_run_max_agent_heartbeat_task(
                     if satisfied_agents < int(cached_target_agents or 0):
                         continue
 
-                    stop_result = run_launcher.stop_run(run_id, institutional_mode=bool(run.institutional_mode))
+                    stop_result = run_launcher.stop_run(run_id)
                     if stop_result.get("status") != "success" and stop_result.get("status") != "not_found":
                         error_message = stop_result.get("error", "Unknown error")
                         run.status = RunStatusEnum.FAILED.value

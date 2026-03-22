@@ -112,7 +112,6 @@ async def create_bound_run(
 
     db_run = RunDB(
         resolved_bundle_hash=resolved_bundle_hash,
-        institutional_mode=request.institutional_mode,
         seed=request.seed,
         status=RunStatusEnum.PENDING.value,
         started_at=datetime.utcnow(),
@@ -263,7 +262,6 @@ async def create_bound_run(
     launch_config = RunLaunchConfig(
         run_id=db_run.run_id,
         environment_id=str(normalized_env_config.get("environment_id") or "").strip() or environment_id,
-        institutional_mode=request.institutional_mode,
         seed=request.seed,
         resolved_bundle_hash=resolved_bundle_hash,
         api_key=effective_api_key,
@@ -279,7 +277,6 @@ async def create_bound_run(
             await asyncio.to_thread(
                 run_launcher.stop_run,
                 db_run.run_id,
-                institutional_mode=request.institutional_mode,
             )
         except Exception as stop_error:
             logger.warning(
@@ -314,7 +311,6 @@ async def create_bound_run(
                 await asyncio.to_thread(
                     run_launcher.stop_run,
                     db_run.run_id,
-                    institutional_mode=request.institutional_mode,
                 )
             except Exception as stop_error:
                 logger.warning(
@@ -351,7 +347,6 @@ async def create_bound_run(
     health_result = await run_launcher.wait_for_run_services(
         run_id=db_run.run_id,
         environment_id=environment_id,
-        institutional_mode=request.institutional_mode,
         timeout=settings.health_check_timeout,
         interval=settings.health_check_interval,
     )
@@ -373,7 +368,6 @@ async def create_bound_run(
             service_urls = run_launcher.get_service_urls(
                 run_id=db_run.run_id,
                 environment_id=environment_id,
-                institutional_mode=request.institutional_mode,
             )
         except Exception as exc:
             await mark_run_failed_and_stop(
@@ -599,7 +593,6 @@ async def create_bound_run(
             run_id=db_run.run_id,
             environment_url=environment_url,
             environment_name=environment_name,
-            institutional_mode=db_run.institutional_mode,
             pre_register_agents=pre_register_agents,
             init_timeout_seconds=float(resolved_agent_init_timeout_seconds),
         )
@@ -753,37 +746,6 @@ async def delete_run(run_id: str, *, db: Session) -> Any:
 
 async def get_run_cost(run_id: str, *, db: Session) -> dict[str, Any]:
     return await run_public_ops.get_run_cost(run_id, db=db)
-
-
-async def get_run_compass_review(
-    run_id: str,
-    *,
-    history_limit: int,
-    event_limit: int,
-    db: Session,
-) -> dict[str, Any]:
-    return await run_public_ops.get_run_compass_review(
-        run_id,
-        history_limit=history_limit,
-        event_limit=event_limit,
-        db=db,
-    )
-
-
-async def get_run_condition_manifest(run_id: str, *, mode: str, db: Session) -> dict[str, Any]:
-    return await run_public_ops.get_run_condition_manifest(run_id, mode=mode, db=db)
-
-
-async def get_run_condition_manifest_csv(run_id: str, *, mode: str, db: Session):
-    return await run_public_ops.get_run_condition_manifest_csv(run_id, mode=mode, db=db)
-
-
-async def get_run_agent_context(run_id: str, *, limit_per_agent: int, db: Session) -> dict[str, Any]:
-    return await run_public_ops.get_run_agent_context(run_id, limit_per_agent=limit_per_agent, db=db)
-
-
-async def export_agent_context(run_id: str, agent_id: str, *, tick: int | None, db: Session) -> dict[str, Any]:
-    return await run_public_ops.export_agent_context(run_id, agent_id, tick=tick, db=db)
 
 
 async def get_run_scheduler_status(

@@ -24,10 +24,6 @@ class RunStatus(str, Enum):
 class RunBase(BaseModel):
     """Base payload for run launch inputs."""
 
-    institutional_mode: bool = Field(
-        default=False,
-        description="Whether institutional mode is enabled for this run.",
-    )
     seed: Optional[int] = Field(default=None, description="Random seed for reproducibility.")
     api_key: Optional[str] = Field(
         default=None,
@@ -37,7 +33,6 @@ class RunBase(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "institutional_mode": False,
                 "seed": 42,
                 "api_key": "sk-or-v1-...",
             }
@@ -105,7 +100,6 @@ class Run(RunBase):
                 "environment_url": "http://environment-backend-run_def456:8000",
                 "frontend_url": "http://localhost:18432",
                 "status": "running",
-                "institutional_mode": False,
                 "seed": 42,
                 "started_at": "2026-02-08T10:05:00Z",
                 "ended_at": None,

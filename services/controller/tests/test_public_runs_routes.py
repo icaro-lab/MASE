@@ -173,21 +173,6 @@ def test_public_runs_list_route(api_client, db_session) -> None:
     assert "environment_id" in row
 
 
-def test_public_runs_condition_manifest_route(api_client, db_session) -> None:
-    run_id = _seed_public_run(db_session)
-
-    response = api_client.get(f"/api/v1/runs/{run_id}/condition-manifest")
-    assert response.status_code == 200, response.text
-
-    payload = response.json()
-    assert payload["run_id"] == run_id
-    assert payload["environment_ref"] == "environment/moltbook"
-    assert payload["population"]["agent_count"] == 2
-    assert payload["population"]["groups"][0]["group_id"] == "resident"
-    assert "population" in payload
-    assert "environment_ref" in payload
-
-
 def test_public_runs_cost_route(api_client, db_session) -> None:
     run_id = _seed_public_run(db_session)
     db_session.add_all(

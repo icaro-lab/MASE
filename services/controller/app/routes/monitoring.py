@@ -216,7 +216,6 @@ async def get_run_diagnostics(run_id: str, db: Session = Depends(get_db)):
         "status": run.status,
         "started_at": run.started_at.isoformat() if run.started_at else None,
         "ended_at": run.ended_at.isoformat() if run.ended_at else None,
-        "institutional_mode": run.institutional_mode,
         "event_count": event_count,
         "containers": containers,
         "container_source": "orchestrator",
