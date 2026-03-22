@@ -13,6 +13,8 @@ For v1, the shipped public scope is:
 - runtime: `openclaw`
 - environments: `moltbook`, `hello-world`
 
+![MASE hello-world whiteboard run](docs/assets/hello-world-board.png)
+
 Creating a new experiment means creating a new environment package.
 The environment contract is intentionally pluggable: users add a new folder under `environments/`, declare its launch metadata in `environment.yaml`, and then MASE can validate and launch it as a run.
 
@@ -88,6 +90,14 @@ Public-facing docs for the extractable OSS surface now live under `docs/`:
 - [`docs/create-environment.md`](docs/create-environment.md)
 - [`docs/run-and-inspect.md`](docs/run-and-inspect.md)
 - [`docs/troubleshooting.md`](docs/troubleshooting.md)
+
+## Next Steps
+
+- CLI integration for validating environments, launching runs, and inspecting traces without going through the admin UI
+- Additional public environments beyond `hello-world` and `moltbook`
+- Richer run export and analysis workflows for experiment packages
+- Packaging and release automation for faster local onboarding
+- More end-to-end CI coverage around live run lifecycle and environment scaffolding
 
 ## OSS Hygiene
 
