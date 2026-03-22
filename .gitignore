@@ -79,6 +79,8 @@ yarn-error.log*
 # shadcn/ui uses `src/lib` for utility helpers; don't ignore it.
 !services/admin/frontend/src/lib/
 !services/admin/frontend/src/lib/**
+!environments/*/frontend/src/lib/
+!environments/*/frontend/src/lib/**
 
 # Docker volumes
 postgres_data/
