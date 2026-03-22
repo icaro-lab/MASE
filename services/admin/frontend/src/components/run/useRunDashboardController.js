@@ -330,9 +330,6 @@ export function useRunDashboardController({ mode = 'live' }) {
   const [schedulerStatus, setSchedulerStatus] = useState(null);
   const [schedulerStatusError, setSchedulerStatusError] = useState('');
 
-  const [agentContext, setAgentContext] = useState(null);
-  const [agentContextError, setAgentContextError] = useState('');
-
   const [historyEvents, setHistoryEvents] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState('');
@@ -417,9 +414,8 @@ export function useRunDashboardController({ mode = 'live' }) {
       setError(null);
       setRunCostError('');
       setSchedulerStatusError('');
-      setAgentContextError('');
 
-      const [runData, countData, costData, schedulerData, contextData] = await Promise.all([
+      const [runData, countData, costData, schedulerData] = await Promise.all([
         runApi.get(run_id),
         eventsApi.getRunEventCount(run_id),
         runApi.getCost(run_id).catch((err) => {
@@ -430,10 +426,6 @@ export function useRunDashboardController({ mode = 'live' }) {
           setSchedulerStatusError(err.message || 'Failed to load scheduler status');
           return null;
         }),
-        runApi.getAgentContext(run_id, { limit_per_agent: 10 }).catch((err) => {
-          setAgentContextError(err.message || 'Failed to load agent context');
-          return null;
-        }),
       ]);
 
       setRun(runData);
@@ -441,7 +433,6 @@ export function useRunDashboardController({ mode = 'live' }) {
       setEventTypeCounts(countData?.event_types || {});
       setRunCost(costData || null);
       setSchedulerStatus(schedulerData || null);
-      setAgentContext(contextData || null);
       missingRunHandledRef.current = false;
     } catch (err) {
       if (err?.status === 404) {
@@ -455,7 +446,6 @@ export function useRunDashboardController({ mode = 'live' }) {
       setRun(null);
       setRunCost(null);
       setSchedulerStatus(null);
-      setAgentContext(null);
       setError(err.message || 'Failed to load run');
     } finally {
       setLoading(false);
@@ -530,8 +520,6 @@ export function useRunDashboardController({ mode = 'live' }) {
     setRunCostError('');
     setSchedulerStatus(null);
     setSchedulerStatusError('');
-    setAgentContext(null);
-    setAgentContextError('');
     setEventCount(0);
     setEventTypeCounts({});
     setHistoryEvents([]);
@@ -1049,15 +1037,15 @@ export function useRunDashboardController({ mode = 'live' }) {
   }, [costTotals, eventTypeCounts, historyEvents]);
 
   const agentCount = useMemo(() => {
-    const agents = Array.isArray(agentContext?.agents) ? agentContext.agents : [];
-    if (agents.length) return agents.length;
+    const configured = Number.parseInt(String(run?.agent_count ?? ''), 10);
+    if (Number.isFinite(configured) && configured > 0) return configured;
     const seen = new Set();
     telemetryRef.current.buffer.forEach((evt) => {
       const agentId = telemetryAgentId(evt);
       if (agentId && agentId !== '<system>') seen.add(agentId);
     });
     return seen.size || null;
-  }, [agentContext, telemetryVersion]);
+  }, [run?.agent_count, telemetryVersion]);
 
   const costSeries = useMemo(() => {
     const series = Array.isArray(runCost?.series_minute) ? runCost.series_minute : [];
@@ -1466,7 +1454,6 @@ export function useRunDashboardController({ mode = 'live' }) {
     error,
     runCostError,
     schedulerStatusError,
-    agentContextError,
     streamIndicator,
     schedulerIndicator,
     autoRefresh,

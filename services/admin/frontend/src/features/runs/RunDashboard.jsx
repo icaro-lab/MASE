@@ -81,7 +81,6 @@ const RunDashboard = ({ mode = 'stats' }) => {
     error,
     runCostError,
     schedulerStatusError,
-    agentContextError,
     streamIndicator,
     schedulerIndicator,
     refreshAll,
@@ -286,7 +285,6 @@ const RunDashboard = ({ mode = 'stats' }) => {
           type="warning"
           message={schedulerStatusError ? `Scheduler status unavailable: ${schedulerStatusError}` : ''}
         />
-        <RunAlert type="warning" message={agentContextError} />
       </div>
 
       {selectedMode === 'stats' ? (

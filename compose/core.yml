@@ -118,7 +118,7 @@ services:
       - ./services/controller:/app
       - run_metrics:/app/metrics
       - run_state:/app/state
-      - ./logs:/app/.project/logs
+      - ./logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy

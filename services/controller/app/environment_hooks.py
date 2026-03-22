@@ -80,7 +80,7 @@ def launch_run_hooks(
         if not script_path.is_file():
             raise ValueError(f"Run hook script not found: {hook['script']}")
 
-        hook_log_dir = project_root / ".project" / "logs" / "runs" / run_id / "hooks" / hook_id
+        hook_log_dir = project_root / "logs" / "runs" / run_id / "hooks" / hook_id
         hook_log_dir.mkdir(parents=True, exist_ok=True)
         log_path = hook_log_dir / "hook.log"
 

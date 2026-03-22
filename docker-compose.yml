@@ -140,7 +140,7 @@ services:
       - ./compose:/app/compose
       - ./runtimes:/app/runtimes:ro
       - ./environments:/app/environments:ro
-      - ./logs:/app/.project/logs
+      - ./logs:/app/logs
       - run_logs:/app/logs
       - shared_agent_fs:/mnt/agent_fs
     depends_on:

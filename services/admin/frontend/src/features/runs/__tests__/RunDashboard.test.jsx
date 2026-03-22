@@ -34,7 +34,6 @@ function baseControllerState(overrides = {}) {
     error: '',
     runCostError: '',
     schedulerStatusError: '',
-    agentContextError: '',
     streamIndicator: { tone: 'healthy', label: 'live' },
     schedulerIndicator: { tone: 'offline', label: 'stopped', detail: 'done' },
     refreshAll: vi.fn(),
