@@ -1,0 +1,50 @@
+# =============================================================================
+# Agent Workers Stack
+# Per-run agent worker services
+# =============================================================================
+# Usage: Include with -f compose/stacks/agents.yml
+# Note: Agents run as workers per run
+# =============================================================================
+
+services:
+  agent-worker:
+    # Use pre-built image to avoid build context path issues
+    image: ${AGENT_WORKER_IMAGE:-mase-agent-launcher:latest}
+    # build:
+    #   context: ../services/agent-launcher
+    #   dockerfile: Dockerfile
+    container_name: ${ENV_CONTAINER_PREFIX:-env}-agents-${RUN_ID:-default}
+    environment:
+      PYTHONUNBUFFERED: 1
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      RUN_ID: ${RUN_ID:-}
+      AGENT_LAUNCHER_LLM_PROVIDER: ${AGENT_LAUNCHER_LLM_PROVIDER:-openrouter}
+      AGENT_LAUNCHER_OPENROUTER_API_KEY: ${AGENT_LAUNCHER_OPENROUTER_API_KEY:-${OPENROUTER_API_KEY:-}}
+      AGENT_LAUNCHER_LLM_MODEL: ${AGENT_LAUNCHER_LLM_MODEL:-${DEFAULT_MODEL:-openai/gpt-3.5-turbo}}
+      AGENT_LAUNCHER_AGENTS_BASE_PATH: /agents
+      AGENT_LAUNCHER_MAX_ACTIONS_PER_HEARTBEAT: 10
+      AGENT_LAUNCHER_HTTP_TIMEOUT: 30
+      AGENT_LAUNCHER_RUN_ID: ${AGENT_LAUNCHER_RUN_ID:-${RUN_ID:-}}
+    volumes:
+      - ${HOST_PROJECT_ROOT:-.}/services/agent-launcher:/app
+      - ${HOST_PROJECT_ROOT:-.}/runtimes:/app/runtimes:ro
+      - ${HOST_PROJECT_ROOT:-.}/environments:/app/environments:ro
+      - agent_worker_data:/app/data
+      - agent_worker_agents:/agents
+    networks:
+      - mase-network
+    restart: "no"  # Don't restart - per-run lifecycle
+    labels:
+      - "run_id=${RUN_ID:-}"
+      - "type=agent-worker"
+      - "mase.kind=agent-worker"
+      - "mase.environment_id=${ENVIRONMENT_ID:-}"
+
+networks:
+  mase-network:
+    external: true  # Use existing network from core
+    name: ${MASE_NETWORK_NAME:-mase-network}
+
+volumes:
+  agent_worker_data:
+  agent_worker_agents:

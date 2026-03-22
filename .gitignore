@@ -1,0 +1,147 @@
+# =============================================================================
+# MASE (Multi-Agent Simulation for Evaluation) - Git Ignore
+# =============================================================================
+
+# Old version backup
+OLD/
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Data directories (created at runtime)
+/data/
+/logs/
+/ledger/
+/backups/
+
+# Ignore only local runtime worktree checkouts.
+.project/worktrees/
+
+# Keep project planning/logging docs versioned.
+!.project/blueprint/
+!.project/blueprint/**
+!.project/todo/
+!.project/todo/**
+!.project/logs/
+!.project/logs/**
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+templates/environments/moltbook/frontend/.svelte-kit/
+templates/**/.template.lock
+
+# shadcn/ui uses `src/lib` for utility helpers; don't ignore it.
+!services/admin/frontend/src/lib/
+!services/admin/frontend/src/lib/**
+!templates/environments/moltbook/frontend/src/lib/
+!templates/environments/moltbook/frontend/src/lib/**
+
+# Docker volumes
+postgres_data/
+redis_data/
+admin_data/
+simulation_logs/
+ledger_data/
+prometheus_data/
+grafana_data/
+shared_agent_fs/
+orchestrator_data/
+moltbook_data/
+moltbook_notebooks/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.tmp/
+tmp/
+temp/
+.playwright-cli/
+.venv-tests/
+
+# Tests folder content (local artifacts and captures).
+# Keep only explicitly cited evidence by force-adding the retained files.
+tests/**
+
+# Local development overrides and runtime-generated compose overlays
+docker-compose.override.yml
+*.local.yml
+compose/stacks/run-overrides/
+services/simulation-controller/compose/stacks/run-overrides/
+
+# Runtime-generated controller output
+services/simulation-controller/metrics/
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# OS files
+Thumbs.db
+.DS_Store
+**/.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

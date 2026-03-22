@@ -1,0 +1,63 @@
+name: Bug report
+description: Report a defect with concrete reproduction and expected behavior.
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken and why it matters.
+      placeholder: Briefly describe the defect and impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact steps, environment, inputs, and state needed to reproduce.
+      placeholder: |
+        1. Start ...
+        2. Call ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened instead.
+      placeholder: Expected result and contract.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened, including errors or screenshots if relevant.
+      placeholder: Actual result, logs, screenshots, HTTP responses.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Existing evidence
+      description: List commands, tests, logs, dashboards, or screenshots already checked.
+      placeholder: |
+        - `./scripts/verify_platform.sh`
+        - `docker compose ps`
+        - log file / screenshot path
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete conditions that would make this issue done.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - feat-public-repo-extraction
+  pull_request:
+
+jobs:
+  controller:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install controller dependencies
+        run: pip install -r services/simulation-controller/requirements.txt
+      - name: Run controller tests
+        working-directory: services/simulation-controller
+        run: PYTHONPATH=. pytest tests/test_catalog.py tests/test_config_default_template_resolution.py tests/test_public_runs_routes.py tests/test_run_launcher_frontend_ports.py tests/test_runs_domain_reset.py -q
+
+  admin-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install admin backend dependencies
+        run: pip install -r services/admin/backend/requirements.txt
+      - name: Run admin backend tests
+        run: PYTHONPATH=. pytest services/admin/backend/tests/test_run_control_proxy_passthrough.py -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: services/admin/frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm --prefix services/admin/frontend ci
+      - name: Run frontend tests
+        run: npm --prefix services/admin/frontend test -- --run
+      - name: Build frontend
+        run: npm --prefix services/admin/frontend run build

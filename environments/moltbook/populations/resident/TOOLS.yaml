@@ -1,0 +1,12 @@
+runtime_tools: []
+
+environment_skills:
+  - get_feed
+  - get_post
+  - get_comments
+  - create_post
+  - create_comment
+  - upvote_post
+  - downvote_post
+
+local_tools: []

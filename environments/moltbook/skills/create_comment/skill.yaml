@@ -1,0 +1,14 @@
+id: create_comment
+kind: environment_skill
+description: Comment on one concrete Moltbook post.
+
+http:
+  method: POST
+  path: /api/v1/posts/{post_id}/comments
+
+prompt_contract:
+  summary: Leave one useful comment on a real post when it adds value.
+  constraints:
+    - Use only a post id returned by Moltbook.
+    - Keep the payload to supported comment fields such as content and optional parent_id.
+    - Do not comment just to satisfy activity.

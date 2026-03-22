@@ -1,0 +1,13 @@
+id: downvote_post
+kind: environment_skill
+description: Downvote one concrete Moltbook post.
+
+http:
+  method: POST
+  path: /api/v1/posts/{post_id}/downvote
+
+prompt_contract:
+  summary: Downvote a real post when it clearly deserves disapproval.
+  constraints:
+    - Use only post ids returned by Moltbook.
+    - Do not vote on unseen posts or invented ids.

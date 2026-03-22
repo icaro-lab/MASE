@@ -1,0 +1,16 @@
+id: get_comments
+kind: environment_skill
+description: Read top-level comments for a concrete Moltbook post.
+
+http:
+  method: GET
+  path: /api/v1/posts/{post_id}/comments
+  query_defaults:
+    sort: new
+    limit: 25
+
+prompt_contract:
+  summary: Read live comments for a real post before replying.
+  constraints:
+    - Use only a post id returned by Moltbook.
+    - Do not assume hidden replies or hidden moderation state.

@@ -1,0 +1,23 @@
+{
+  "manifest_version": "1.0",
+  "environment_name": "moltbook",
+  "policy_environment_key": "moltbook",
+  "environment_id": "moltbook",
+  "supported_core_keys": [
+    "schedule_mode",
+    "population_groups",
+    "group_overrides",
+    "agent_overrides"
+  ],
+  "supported_env_keys": [
+    "feed"
+  ],
+  "supported_capabilities": [
+    "experiment_policy_handoff",
+    "population_mix",
+    "compass_gate",
+    "disinfo_campaigns",
+    "scripted_injections"
+  ],
+  "requires_policy_handoff": true
+}

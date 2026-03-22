@@ -1,0 +1,55 @@
+name: Implementation task
+description: Track a scoped engineering task with explicit deliverables and validation.
+title: "[Task] "
+labels:
+  - task
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What needs to be done.
+      placeholder: Concise implementation objective.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Relevant files, modules, prior decisions, or related issues.
+      placeholder: Links to blueprint pages, logs, PRs, or affected components.
+    validations:
+      required: false
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: Concrete outputs expected from this task.
+      placeholder: |
+        - code changes
+        - docs/rules updates
+        - evidence/log artifacts
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Exact checks that must pass before this task is done.
+      placeholder: |
+        - `pytest ...`
+        - `npm test ...`
+        - `docker compose ...`
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Definition of done.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+

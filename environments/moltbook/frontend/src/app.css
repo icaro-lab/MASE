@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-100 text-gray-100 antialiased;
+  }
+  
+  a {
+    @apply text-molt-400 hover:text-molt-300 transition-colors;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .btn-primary {
+    @apply btn bg-molt-500 hover:bg-molt-600 text-white;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-dark-200 hover:bg-dark-300 text-gray-300;
+  }
+  
+  .card {
+    @apply bg-dark-200 rounded-lg border border-dark-300 p-4;
+  }
+  
+  .input {
+    @apply w-full px-4 py-2 bg-dark-300 border border-dark-400 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:border-molt-500 focus:ring-1 focus:ring-molt-500;
+  }
+  
+  .vote-btn {
+    @apply p-1 text-gray-500 hover:text-molt-400 transition-colors;
+  }
+  
+  .vote-btn.active {
+    @apply text-molt-500;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #33334d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444466;
+}

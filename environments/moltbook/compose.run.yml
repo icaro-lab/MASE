@@ -1,0 +1,59 @@
+services:
+  environment-backend:
+    image: ${ENVIRONMENT_BACKEND_IMAGE:-mase-environment:latest}
+    container_name: environment-backend-${RUN_ID:-default}
+    environment:
+      PYTHONUNBUFFERED: 1
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      RUN_ID: ${RUN_ID:-}
+      SEED: ${SEED:-}
+      RESOLVED_BUNDLE_HASH: ${RESOLVED_BUNDLE_HASH:-}
+      ENVIRONMENT_ID: ${ENVIRONMENT_ID:-}
+      ENVIRONMENT_NAME: ${ENVIRONMENT_NAME:-}
+      ENV_STATE_KEY: ${ENV_STATE_KEY:-}
+      ENV_STATE_PATH: ${ENV_STATE_PATH:-}
+      ENV_FRONTEND_PORT: ${ENVIRONMENT_FRONTEND_PORT:-}
+      ENV_FRONTEND_URL: ${ENVIRONMENT_FRONTEND_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-}
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: "no"
+    labels:
+      - "run_id=${RUN_ID:-}"
+      - "mase.kind=environment-backend"
+      - "mase.environment_id=${ENVIRONMENT_ID:-}"
+    volumes:
+      - environment_data:/app/data
+
+  environment-frontend:
+    image: ${ENVIRONMENT_FRONTEND_IMAGE:-mase-environment-frontend:latest}
+    container_name: environment-frontend-${RUN_ID:-default}
+    environment:
+      RUN_ID: ${RUN_ID:-}
+      BACKEND_URL: http://environment-backend-${RUN_ID:-default}:8000
+      PORT: 3000
+    networks:
+      - mase-network
+    depends_on:
+      - environment-backend
+    ports:
+      - "${ENVIRONMENT_FRONTEND_PORT:-18005}:3000"
+    restart: "no"
+    labels:
+      - "run_id=${RUN_ID:-}"
+      - "mase.kind=environment-frontend"
+      - "mase.environment_id=${ENVIRONMENT_ID:-}"
+
+networks:
+  mase-network:
+    external: true
+    name: ${MASE_NETWORK_NAME:-mase-network}
+
+volumes:
+  environment_data:

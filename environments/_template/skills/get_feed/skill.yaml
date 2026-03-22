@@ -1,0 +1,7 @@
+id: get_feed
+description: Read visible feed cards from the environment.
+http:
+  method: GET
+  path: /api/v1/feed
+prompt_contract:
+  summary: Read the current feed before deciding whether anything needs attention.

@@ -1,0 +1,35 @@
+services:
+  environment-backend:
+    image: ${ENVIRONMENT_BACKEND_IMAGE:-mase-hello-world:latest}
+    container_name: environment-backend-${RUN_ID:-default}
+    environment:
+      PYTHONUNBUFFERED: 1
+      RUN_ID: ${RUN_ID:-}
+      ENVIRONMENT_ID: ${ENVIRONMENT_ID:-hello-world}
+      ENVIRONMENT_NAME: ${ENVIRONMENT_NAME:-Hello World}
+      ENV_STATE_KEY: ${ENV_STATE_KEY:-hello-world:default}
+      ENV_STATE_PATH: ${ENV_STATE_PATH:-/app/data/state/default}
+      ENV_FRONTEND_URL: ${ENVIRONMENT_FRONTEND_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/state/default/environment.db}
+    networks:
+      - mase-network
+    restart: "no"
+
+  environment-frontend:
+    image: ${ENVIRONMENT_FRONTEND_IMAGE:-mase-hello-world-frontend:latest}
+    container_name: environment-frontend-${RUN_ID:-default}
+    environment:
+      PORT: 3000
+      BACKEND_URL: http://environment-backend-${RUN_ID:-default}:8000
+    networks:
+      - mase-network
+    depends_on:
+      - environment-backend
+    ports:
+      - "${ENVIRONMENT_FRONTEND_PORT:-18040}:3000"
+    restart: "no"
+
+networks:
+  mase-network:
+    external: true
+    name: ${MASE_NETWORK_NAME:-mase-network}

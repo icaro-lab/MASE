@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose a new capability or behavior change with clear scope and validation.
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should be built or changed.
+      placeholder: Concise description of the requested feature.
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: Why this matters and what gap exists today.
+      placeholder: Current limitation, workflow pain, or product gap.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Be explicit about what is in scope and out of scope.
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: contracts
+    attributes:
+      label: Contract / UX impact
+      description: Note any API, runtime, scoring, workflow, or frontend behavior changes.
+      placeholder: Which surfaces or contracts change.
+    validations:
+      required: false
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: How should this be verified when implemented.
+      placeholder: |
+        - unit/integration tests
+        - Docker/runtime checks
+        - Playwright/browser checks
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Definition of done.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+

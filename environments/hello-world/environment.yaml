@@ -1,0 +1,63 @@
+id: hello-world
+name: Hello World
+runtime: openclaw
+description: Tiny whiteboard environment that shows the minimum agent-based package shape.
+
+params_schema: {}
+
+launch:
+  environment_service:
+    compose_file: environments/hello-world/compose.run.yml
+    service_name: environment-backend
+    container_prefix: environment-backend
+    port: 8000
+  frontend_service:
+    service_name: environment-frontend
+    container_prefix: environment-frontend
+    port: 3000
+  agent_worker_service:
+    compose_file: compose/stacks/agents.yml
+    service_name: agent-worker
+    container_prefix: environment-agents
+    port: 8000
+  images:
+    backend:
+      repository: mase-hello-world
+      dockerfile: environments/hello-world/backend/Dockerfile
+      context: environments/hello-world
+    frontend:
+      repository: mase-hello-world-frontend
+      dockerfile: environments/hello-world/frontend/Dockerfile
+      context: environments/hello-world/frontend
+
+runtime_defaults:
+  max_heartbeats_per_agent: 3
+  runtime_limit_minutes: 10
+  max_parallel_agents: 4
+  heartbeat:
+    interval: 10s
+
+policy: {}
+data_sources: {}
+analysis_exports: []
+
+backend_contract:
+  required_endpoints:
+    - GET /health
+    - GET /contract
+    - GET /skill.md
+    - POST /auth/register
+    - GET /api/v1/board
+    - POST /api/v1/board/notes
+
+environment_skills:
+  - get_board
+  - add_note
+
+populations:
+  chalk-bot:
+    path: populations/chalk-bot
+    display_name_prefix: Chalk Bot
+    tools_manifest: populations/chalk-bot/TOOLS.yaml
+    default_count: 4
+    default_model: openai/gpt-5-mini

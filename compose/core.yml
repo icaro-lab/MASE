@@ -1,0 +1,240 @@
+# =============================================================================
+# MASE Core Platform Compose
+# Always-on services for the MASE platform
+# =============================================================================
+# Wrapper scripts use the root docker-compose.yml as the canonical local stack.
+# Direct compose usage of this file remains available for debugging:
+#   docker compose -f compose/core.yml up -d
+# =============================================================================
+
+x-common-variables: &common-variables
+  PYTHONUNBUFFERED: 1
+  PYTHONDONTWRITEBYTECODE: 1
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+
+services:
+  # ===========================================================================
+  # Shared Infrastructure
+  # ===========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mase}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mase}
+      POSTGRES_DB: ${POSTGRES_DB:-mase}
+      POSTGRES_MULTIPLE_DATABASES: mase_admin,mase_runs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mase} -d ${POSTGRES_DB:-mase}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Core Platform Services (Always On)
+  # ===========================================================================
+
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "${ORCHESTRATOR_PORT:-8006}:8006"
+    environment:
+      <<: *common-variables
+      PORT: 8006
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mase}
+      DOCKER_SOCKET_PATH: /var/run/docker.sock
+      HEALTH_CHECK_TIMEOUT: 120
+      HEALTH_CHECK_INTERVAL: 5
+      HEALTH_CHECK_RETRIES: 24
+      ORCHESTRATOR_ALLOWED_COMPOSE_DIRS: ./environments,./compose
+      ORCHESTRATOR_HOST_PROJECT_ROOT: /app
+      HOST_PROJECT_ROOT: ${HOST_PROJECT_ROOT:-/app}
+      MASE_NETWORK_NAME: ${MASE_NETWORK_NAME:-mase-network}
+    volumes:
+      - ./services/orchestrator/app:/app/app
+      - ./services/orchestrator/requirements.txt:/app/requirements.txt:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./environments:/app/environments:ro
+      - ./services/agent-launcher:/app/services/agent-launcher:ro
+      - ./compose:/app/compose:ro
+      - orchestrator_data:/app/data
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  controller:
+    build:
+      context: ./services/controller
+      dockerfile: Dockerfile
+    ports:
+      - "${CONTROLLER_PORT:-8002}:8002"
+    environment:
+      <<: *common-variables
+      PORT: 8002
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mase}
+      SIM_CTRL_OPENROUTER_API_KEY: ${SIM_CTRL_OPENROUTER_API_KEY:-${AGENT_LAUNCHER_OPENROUTER_API_KEY:-${OPENROUTER_API_KEY:-}}}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-${SIM_CTRL_OPENROUTER_API_KEY:-${AGENT_LAUNCHER_OPENROUTER_API_KEY:-}}}
+      DATABASE_URL: ${CONTROLLER_DATABASE_URL:-postgresql://mase:mase@postgres:5432/mase_runs}
+      AGENT_LAUNCHER_URL: http://agent-launcher:8000
+      ORCHESTRATOR_URL: http://orchestrator:8006
+      METRICS_PATH: /app/metrics
+      STATE_PATH: /app/state
+      MASE_NETWORK_NAME: ${MASE_NETWORK_NAME:-mase-network}
+      AGENT_WORKER_IMAGE: ${AGENT_WORKER_IMAGE:-}
+      HOST_PROJECT_ROOT: ${HOST_PROJECT_ROOT:-/app}
+    volumes:
+      - ./services/controller:/app
+      - run_metrics:/app/metrics
+      - run_state:/app/state
+      - ./logs:/app/.project/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  agent-launcher:
+    image: ${AGENT_WORKER_IMAGE:-mase-agent-launcher:latest}
+    build:
+      context: .
+      dockerfile: services/agent-launcher/Dockerfile
+      target: runtime
+    ports:
+      - "${AGENT_LAUNCHER_PORT:-8004}:8000"
+    environment:
+      <<: *common-variables
+      PORT: 8000
+      AGENT_LAUNCHER_OPENROUTER_API_KEY: ${AGENT_LAUNCHER_OPENROUTER_API_KEY:-${OPENROUTER_API_KEY:-}}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-${AGENT_LAUNCHER_OPENROUTER_API_KEY:-}}
+      DEFAULT_MODEL: ${DEFAULT_MODEL:-openai/gpt-3.5-turbo}
+    volumes:
+      - ./services/agent-launcher:/app
+      - ./runtimes:/app/runtimes:ro
+      - ./environments:/app/environments:ro
+      - agent_data:/app/data
+      - ./agents:/app/agents:ro
+    depends_on:
+      - redis
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  admin-backend:
+    build:
+      context: ./services/admin/backend
+      dockerfile: Dockerfile
+    ports:
+      - "${ADMIN_BACKEND_PORT:-8001}:8001"
+    environment:
+      <<: *common-variables
+      PORT: 8001
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-mase}
+      DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://mase:mase@postgres:5432/mase_admin}
+      ORCHESTRATOR_URL: http://orchestrator:8006
+      CONTROLLER_URL: http://controller:8002
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      MASE_NETWORK_NAME: ${MASE_NETWORK_NAME:-mase-network}
+    volumes:
+      - ./services/admin/backend:/app
+      - admin_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  admin-frontend:
+    build:
+      context: ./services/admin/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${ADMIN_FRONTEND_PORT:-3016}:80"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      - admin-backend
+    networks:
+      - mase-network
+    restart: unless-stopped
+
+# =============================================================================
+# Networks
+# =============================================================================
+
+networks:
+  mase-network:
+    driver: bridge
+    name: ${MASE_NETWORK_NAME:-mase-network}
+
+# =============================================================================
+# Volumes
+# =============================================================================
+
+volumes:
+  postgres_data:
+  redis_data:
+  orchestrator_data:
+  run_metrics:
+  run_state:
+  agent_data:
+  admin_data:

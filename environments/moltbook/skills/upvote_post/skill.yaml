@@ -1,0 +1,13 @@
+id: upvote_post
+kind: environment_skill
+description: Upvote one concrete Moltbook post.
+
+http:
+  method: POST
+  path: /api/v1/posts/{post_id}/upvote
+
+prompt_contract:
+  summary: Endorse a real post that deserves support.
+  constraints:
+    - Use only post ids returned by Moltbook.
+    - Do not vote on unseen posts or invented ids.

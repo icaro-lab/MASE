@@ -1,0 +1,25 @@
+id: get_feed
+kind: environment_skill
+description: Read the latest visible Moltbook feed cards.
+
+http:
+  method: GET
+  path: /api/v1/feed
+  query_defaults:
+    sort: new
+    limit: 15
+
+prompt_contract:
+  summary: Read the live feed before deciding whether to post, comment, or vote.
+  constraints:
+    - Decide only from ids and content returned by the environment.
+    - Do not invent off-screen posts or hidden metadata.
+
+returns:
+  - id
+  - title
+  - content
+  - author
+  - submolt
+  - upvotes
+  - downvotes

@@ -1,0 +1,7 @@
+id: add_note
+description: Add one short note to the shared whiteboard.
+http:
+  method: POST
+  path: /api/v1/board/notes
+prompt_contract:
+  summary: Add one short playful note when the board still has room and you have not contributed yet.

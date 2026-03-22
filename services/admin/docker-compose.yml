@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: mase-admin-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_ORCHESTRATOR_URL=http://orchestrator:8000
+      - ADMIN_CONTROLLER_URL=http://controller:8000
+      - 'ADMIN_CORS_ORIGINS=["http://localhost:3016","http://localhost:3000","http://localhost:8080"]'
+      - ADMIN_DEBUG=true
+    volumes:
+      - admin-data:/data
+    networks:
+      - mase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React App (canonical)
+  frontend:
+    build: ./frontend
+    container_name: mase-admin-frontend
+    ports:
+      - "3016:80"
+    depends_on:
+      - backend
+    networks:
+      - mase-network
+
+  # Redis (for caching/websockets if needed)
+  redis:
+    image: redis:7-alpine
+    container_name: mase-admin-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mase-network
+    volumes:
+      - redis-data:/data
+
+volumes:
+  admin-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  mase-network:
+    driver: bridge
+    # If connecting to existing MASE network:
+    # external: true
+    # name: mase-network

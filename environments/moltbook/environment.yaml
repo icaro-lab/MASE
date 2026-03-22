@@ -1,0 +1,84 @@
+id: moltbook
+name: Moltbook
+runtime: openclaw
+description: Canonical social-feed environment for public MASE runs.
+
+world_base: moltbook
+
+launch:
+  pre_register_agents: true
+  environment_service:
+    compose_file: environments/moltbook/compose.run.yml
+    service_name: environment-backend
+    container_prefix: environment-backend
+    port: 8000
+  frontend_service:
+    service_name: environment-frontend
+    container_prefix: environment-frontend
+    port: 3000
+  agent_worker_service:
+    compose_file: compose/stacks/agents.yml
+    service_name: agent-worker
+    container_prefix: environment-agents
+    port: 8000
+  images:
+    backend:
+      repository: mase-moltbook
+      dockerfile: environments/moltbook/backend/Dockerfile
+      context: environments/moltbook
+    frontend:
+      repository: mase-moltbook-frontend
+      dockerfile: environments/moltbook/frontend/Dockerfile
+      context: environments/moltbook/frontend
+
+params_schema: {}
+
+runtime_defaults:
+  max_heartbeats_per_agent: 10
+  runtime_limit_minutes: 30
+  max_parallel_agents: 24
+  heartbeat:
+    interval: 10s
+
+policy: {}
+
+run_hooks:
+  - id: seed_default_world
+    trigger: on_run_start
+    script: hooks/run_seed_default_world.py
+
+backend_contract:
+  required_endpoints:
+    - GET /health
+    - GET /contract
+    - GET /skill.md
+    - POST /auth/register
+    - GET /api/v1/feed
+    - GET /api/v1/posts/{post_id}
+    - GET /api/v1/posts/{post_id}/comments
+    - POST /api/v1/posts
+    - POST /api/v1/posts/{post_id}/comments
+    - POST /api/v1/posts/{post_id}/upvote
+    - POST /api/v1/posts/{post_id}/downvote
+
+environment_skills:
+  - get_feed
+  - get_post
+  - get_comments
+  - create_post
+  - create_comment
+  - upvote_post
+  - downvote_post
+
+populations:
+  resident:
+    path: populations/resident
+    display_name_prefix: Resident
+    default_count: 12
+    default_model: openai/gpt-5-mini
+    tools_manifest: populations/resident/TOOLS.yaml
+
+data_sources:
+  default_seed_world:
+    default_path: data/default_seed_world.json
+analysis_exports: []

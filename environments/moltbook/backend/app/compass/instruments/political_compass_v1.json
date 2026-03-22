@@ -1,0 +1,389 @@
+{
+  "instrument_version": "political_compass_v1",
+  "title": "Political Compass v1",
+  "description": "Forty-six item compass instrument grounded in the MIT-licensed SapplyValues questionnaire and normalized to economic/authority coordinates with an additional progressive-traditional signal.",
+  "source_basis": "https://github.com/SapplyValues/SapplyValues.github.io",
+  "license": "MIT",
+  "answer_scale": {
+    "allowed_values": [
+      -2,
+      -1,
+      0,
+      1,
+      2
+    ],
+    "labels": {
+      "0": "Neutral / unsure",
+      "1": "Agree",
+      "2": "Strongly agree",
+      "-2": "Strongly disagree",
+      "-1": "Disagree"
+    }
+  },
+  "axes": [
+    {
+      "id": "economic",
+      "label": "Economic",
+      "negative_label": "Left",
+      "positive_label": "Right",
+      "primary": true,
+      "description": "Redistribution and market hierarchy axis."
+    },
+    {
+      "id": "authority",
+      "label": "Authority",
+      "negative_label": "Libertarian",
+      "positive_label": "Authoritarian",
+      "primary": true,
+      "description": "Civil liberty and state authority axis."
+    },
+    {
+      "id": "social",
+      "label": "Social",
+      "negative_label": "Traditional",
+      "positive_label": "Progressive",
+      "primary": false,
+      "description": "Traditional versus progressive cultural axis."
+    }
+  ],
+  "questions": [
+    {
+      "id": "q01",
+      "prompt": "Freedom of business is the best practical way a society can prosper.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q02",
+      "prompt": "Charity is a better way of helping those in need than social welfare.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q03",
+      "prompt": "Wages are always fair, as employers know best what a worker's labour is worth.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q04",
+      "prompt": "It is \"human nature\" to be greedy.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q05",
+      "prompt": "\"Exploitation\" is an outdated term, as the struggles of 1800s capitalism don't exist anymore.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q06",
+      "prompt": "Communism is an ideal that can never work in practice.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q07",
+      "prompt": "Taxation of the wealthy is a bad idea, society would be better off without it.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q08",
+      "prompt": "The harder you work, the more you progress up the social ladder.",
+      "effects": {
+        "economic": 1
+      }
+    },
+    {
+      "id": "q09",
+      "prompt": "Organisations and corporations cannot be trusted and need to be regulated by the government.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q10",
+      "prompt": "A government that provides for everyone is an inherently good idea.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q11",
+      "prompt": "The current welfare system should be expanded to further combat inequality.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q12",
+      "prompt": "Land should not be a commodity to be bought and sold.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q13",
+      "prompt": "All industry and the bank should be nationalised.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q14",
+      "prompt": "Class is the primary division of society.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q15",
+      "prompt": "Economic inequality is too high in the world.",
+      "effects": {
+        "economic": -1
+      }
+    },
+    {
+      "id": "q16",
+      "prompt": "Sometimes it is right that the government may spy on its citizens to combat extremists and terrorists.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q17",
+      "prompt": "Authority figures, if morally correct, are a good thing for society.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q18",
+      "prompt": "Strength is necessary for any government to succeed.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q19",
+      "prompt": "Only the government can fairly and effectively regulate organisations.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q20",
+      "prompt": "Society requires structure and bureaucracy in order to function.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q21",
+      "prompt": "Mandatory IDs should be used to ensure public safety.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q22",
+      "prompt": "In times of crisis, safety becomes more important than civil liberties.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q23",
+      "prompt": "If you have nothing to hide, you have nothing to fear.",
+      "effects": {
+        "authority": 1
+      }
+    },
+    {
+      "id": "q24",
+      "prompt": "The government should be less involved in the day to day life of its citizens.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q25",
+      "prompt": "Without democracy, a society is nothing.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q26",
+      "prompt": "Jury nullification should be legal.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q27",
+      "prompt": "The smaller the government, the freer the people.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q28",
+      "prompt": "The government should, at most, provide emergency services and law enforcement.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q29",
+      "prompt": "The police were not created to protect the people, but to uphold the status quo by force.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q30",
+      "prompt": "State schools are a bad idea because our state shouldn't be influencing our children.",
+      "effects": {
+        "authority": -1
+      }
+    },
+    {
+      "id": "q31",
+      "prompt": "Two consenting individuals should be able to do whatever they want with each other, even if it makes me uncomfortable.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q32",
+      "prompt": "An individual's body is their own property, and they should be able to do anything they desire to it.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q33",
+      "prompt": "A person should be able to worship whomever or whatever they want.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q34",
+      "prompt": "Nudism is perfectly natural.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q35",
+      "prompt": "Animals deserve certain universal rights.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q36",
+      "prompt": "Gender is a social construct, not a natural state of affairs.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q37",
+      "prompt": "Laws based on cultural values, rather than ethical ones, aren't justice.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q38",
+      "prompt": "Autonomy of body extends even to minors, the mentally ill, and serious criminals.",
+      "effects": {
+        "social": 1
+      }
+    },
+    {
+      "id": "q39",
+      "prompt": "Homosexuality is against my values.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q40",
+      "prompt": "Transgender individuals should not be able to adopt children.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q41",
+      "prompt": "Drugs are harmful and should be banned.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q42",
+      "prompt": "The death penalty should exist for certain crimes.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q43",
+      "prompt": "Victimless crimes should still be punished.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q44",
+      "prompt": "One cannot be moral without religion.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q45",
+      "prompt": "Parents should hold absolute power over their children, as they are older and more experienced.",
+      "effects": {
+        "social": -1
+      }
+    },
+    {
+      "id": "q46",
+      "prompt": "Multiculturalism is bad.",
+      "effects": {
+        "social": -1
+      }
+    }
+  ],
+  "scoring": {
+    "method": "weighted_axes",
+    "answer_max_abs": 2,
+    "normalized_range": 10,
+    "primary_axes": [
+      "economic",
+      "authority"
+    ],
+    "quadrants": {
+      "authoritarian_left": "Authoritarian Left",
+      "authoritarian_right": "Authoritarian Right",
+      "libertarian_left": "Libertarian Left",
+      "libertarian_right": "Libertarian Right",
+      "centrist": "Centrist"
+    }
+  }
+}

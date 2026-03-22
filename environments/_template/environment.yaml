@@ -1,0 +1,42 @@
+id: template-env
+name: Template Environment
+runtime: openclaw
+description: Minimal backend-only environment template for new experiments.
+
+params_schema: {}
+
+launch:
+  environment_service:
+    compose_file: environments/template-env/compose.run.yml
+    service_name: environment-backend
+    container_prefix: environment-backend
+    port: 8000
+  agent_worker_service:
+    compose_file: compose/stacks/agents.yml
+    service_name: agent-worker
+    container_prefix: environment-agents
+    port: 8000
+  images:
+    backend:
+      repository: mase-template-env
+      dockerfile: environments/template-env/backend/Dockerfile
+      context: environments/template-env
+
+backend_contract:
+  required_endpoints:
+    - GET /health
+    - GET /contract
+    - GET /skill.md
+    - POST /auth/register
+    - GET /api/v1/feed
+
+environment_skills:
+  - get_feed
+
+populations:
+  resident:
+    path: populations/resident
+    display_name_prefix: Resident
+    tools_manifest: populations/resident/TOOLS.yaml
+    default_count: 1
+    default_model: openai/gpt-5-mini

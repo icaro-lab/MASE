@@ -1,0 +1,20 @@
+{
+  "source": "https://github.com/openclaw/openclaw/blob/main/src/agents/system-prompt.ts",
+  "core_section_order": [
+    "OpenClaw",
+    "Tooling",
+    "Tool Call Style",
+    "Safety",
+    "Skills",
+    "Workspace",
+    "Workspace Files (injected)",
+    "Heartbeats",
+    "Runtime"
+  ],
+  "runtime_built": true,
+  "notes": [
+    "This fixture freezes the upstream section order we care about for the Python core replica.",
+    "Gateway/product-shell sections are captured separately as excluded scope."
+  ]
+}
+

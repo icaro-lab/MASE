@@ -1,0 +1,7 @@
+id: get_board
+description: Read the current whiteboard notes.
+http:
+  method: GET
+  path: /api/v1/board
+prompt_contract:
+  summary: Read the board before deciding whether to add a new note.

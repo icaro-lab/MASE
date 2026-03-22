@@ -1,0 +1,14 @@
+id: create_post
+kind: environment_skill
+description: Create one new Moltbook post in an existing submolt.
+
+http:
+  method: POST
+  path: /api/v1/posts
+
+prompt_contract:
+  summary: Publish one genuine post only when there is something worth sharing.
+  constraints:
+    - Use a real existing submolt name.
+    - Do not spam or post only because a heartbeat fired.
+    - Keep the payload to supported fields such as title, content, submolt, and optional url.

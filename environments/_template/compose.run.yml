@@ -1,0 +1,19 @@
+services:
+  environment-backend:
+    image: ${ENVIRONMENT_BACKEND_IMAGE:-mase-template-env:latest}
+    environment:
+      PYTHONUNBUFFERED: 1
+      RUN_ID: ${RUN_ID:-}
+      ENVIRONMENT_ID: ${ENVIRONMENT_ID:-template-env}
+      ENV_STATE_KEY: ${ENV_STATE_KEY:-template-env:default}
+      ENV_STATE_PATH: ${ENV_STATE_PATH:-/app/data/state/default}
+      ENV_FRONTEND_URL: ${ENV_FRONTEND_URL:-}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/state/default/environment.db}
+    networks:
+      - mase-network
+    restart: "no"
+
+networks:
+  mase-network:
+    external: true
+    name: ${MASE_NETWORK_NAME:-mase-network}

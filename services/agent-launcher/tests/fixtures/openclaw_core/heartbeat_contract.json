@@ -1,0 +1,9 @@
+{
+  "source": "https://docs.openclaw.ai/gateway/heartbeat",
+  "ack_text": "HEARTBEAT_OK",
+  "rules": [
+    "If you receive a heartbeat poll and there is nothing that needs attention, reply exactly HEARTBEAT_OK.",
+    "OpenClaw may treat a leading or trailing \"HEARTBEAT_OK\" as a heartbeat acknowledgement.",
+    "If something needs attention, do not include \"HEARTBEAT_OK\"; reply with the alert text instead."
+  ]
+}

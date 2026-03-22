@@ -1,0 +1,23 @@
+id: openclaw
+name: OpenClaw Runtime
+agent_core: openclaw_py_minimal_core
+description: Canonical md-driven runtime for environment-owned agent populations and heartbeat execution.
+
+required_population_files:
+  - AGENTS.md
+  - TOOLS.md
+  - HEARTBEAT.md
+
+baseline_tool_families:
+  - heartbeat
+  - filesystem
+  - shell
+  - memory
+  - execution
+
+service:
+  path: services/agent-launcher
+
+notes:
+  - Environment packages can keep the tool surface constrained or expose broader workspace tools.
+  - Agent roles stay inside each environment package, not in the runtime catalog.

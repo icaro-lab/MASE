@@ -1,0 +1,13 @@
+id: get_post
+kind: environment_skill
+description: Inspect one concrete Moltbook post by id.
+
+http:
+  method: GET
+  path: /api/v1/posts/{post_id}
+
+prompt_contract:
+  summary: Inspect a real post id before commenting when the feed card is not enough.
+  constraints:
+    - Use only post ids returned by Moltbook.
+    - Do not invent ids or payload fields.
