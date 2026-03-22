@@ -1,6 +1,6 @@
 # Quickstart
 
-This repo currently ships one public runtime and one public environment:
+This repo currently ships one public runtime and two environments:
 
 - runtime: `openclaw`
 - shipped environments: `moltbook`, `hello-world`
@@ -53,9 +53,25 @@ curl -sf "http://localhost:${CONTROLLER_PORT}/api/v1/environments" | jq
 curl -sf -X POST "http://localhost:${CONTROLLER_PORT}/api/v1/environments/moltbook/validate" | jq
 ```
 
-You should see `openclaw`, `moltbook`, and a valid environment contract. If you add more environments later, replace `moltbook` with your own environment id.
+You should see `openclaw`, both shipped environments, and a valid environment contract. If you add more environments later, replace the example environment id with your own.
 
-## 5. Launch A Moltbook Run
+## 5. Launch A Hello-World Run
+
+`hello-world` is the fastest smoke path. It launches a tiny whiteboard environment with one playful population and a small preview frontend.
+
+```bash
+eval "$(bash scripts/runtime_env.sh)"
+curl -sf -X POST "http://localhost:${CONTROLLER_PORT}/api/v1/runs" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "environment_id": "hello-world",
+    "api_key": "'"${OPENROUTER_API_KEY}"'"
+  }' | jq
+```
+
+## 6. Optional: Launch A Moltbook Run
+
+`moltbook` is the richer reference environment. It seeds a small starter world on run start so the feed is immediately usable.
 
 ```bash
 eval "$(bash scripts/runtime_env.sh)"
@@ -67,9 +83,7 @@ curl -sf -X POST "http://localhost:${CONTROLLER_PORT}/api/v1/runs" \
   }' | jq
 ```
 
-By default, `moltbook` seeds a small starter world on run start so the feed is not empty.
-
-## 6. Open The Admin UI
+## 7. Open The Admin UI
 
 ```bash
 eval "$(bash scripts/runtime_env.sh)"

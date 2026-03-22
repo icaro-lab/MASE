@@ -49,17 +49,33 @@ wait_for_postgres() {
 
 ensure_platform_databases() {
   local database
+  local attempt
 
   for database in mase_admin mase_runs; do
-    if "${compose_cmd[@]}" exec -T postgres psql \
+    for attempt in $(seq 1 30); do
+      if "${compose_cmd[@]}" exec -T postgres psql \
+        -U "${POSTGRES_USER:-mase}" \
+        -d postgres \
+        -tAc "SELECT 1 FROM pg_database WHERE datname = '${database}'" | grep -q '^1$'; then
+        break
+      fi
+
+      if "${compose_cmd[@]}" exec -T postgres createdb \
+        -U "${POSTGRES_USER:-mase}" \
+        "$database" >/dev/null 2>&1; then
+        break
+      fi
+
+      sleep 1
+    done
+
+    if ! "${compose_cmd[@]}" exec -T postgres psql \
       -U "${POSTGRES_USER:-mase}" \
       -d postgres \
       -tAc "SELECT 1 FROM pg_database WHERE datname = '${database}'" | grep -q '^1$'; then
-      continue
+      echo "Timed out ensuring database ${database} exists" >&2
+      return 1
     fi
-    "${compose_cmd[@]}" exec -T postgres createdb \
-      -U "${POSTGRES_USER:-mase}" \
-      "$database" >/dev/null
   done
 }
 

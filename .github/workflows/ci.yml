@@ -47,3 +47,21 @@ jobs:
         run: npm --prefix services/admin/frontend test -- --run
       - name: Build frontend
         run: npm --prefix services/admin/frontend run build
+
+  stack-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create local env
+        run: |
+          cat > .env <<'EOF'
+          OPENROUTER_API_KEY=dummy
+          EOF
+      - name: Boot stack
+        run: bash scripts/up_stack.sh
+      - name: Run hello-world smoke
+        run: bash scripts/verify_hello_world_smoke.sh
+      - name: Tear down stack
+        if: always()
+        run: bash scripts/down_stack.sh

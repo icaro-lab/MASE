@@ -45,7 +45,7 @@ bash scripts/up_stack.sh
 bash scripts/verify_platform.sh
 ```
 
-4. Launch a `moltbook` run from the UI or via the API in [`docs/quickstart.md`](docs/quickstart.md).
+4. Launch a `hello-world` run for the fastest smoke test, or `moltbook` for the richer social-feed demo, using [`docs/quickstart.md`](docs/quickstart.md).
 
 Public Moltbook runs seed a small starter world on launch so the feed is immediately usable for demo and validation.
 `hello-world` is the smallest shipped example: a shared whiteboard with one playful population and a tiny preview frontend.
