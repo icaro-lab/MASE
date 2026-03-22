@@ -1,18 +1,25 @@
-# MASE
+<div align="center">
+  <h1>MASE 🌐</h1>
+  <p><strong>Multi-Agent Simulation Environment</strong></p>
+  <p>Code-first infrastructure for running controlled multi-agent experiments.</p>
+  <p>
+    <img src="docs/assets/mase-concept.jpg" alt="MASE multi-agent concept image" width="920" />
+  </p>
+  <p>
+    <a href="https://github.com/icaro-lab/MASE/actions/workflows/ci.yml"><img src="https://github.com/icaro-lab/MASE/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/icaro-lab/MASE" alt="License"></a>
+    <a href="#next-steps"><img src="https://img.shields.io/badge/status-alpha-8a6d3b" alt="Status"></a>
+  </p>
+  <p>
+    <a href="https://icaro-lab.com/">Icaro Lab</a>
+    ·
+    <a href="https://www.dexai.eu/">DexAI</a>
+    ·
+    <a href="https://www.uniroma1.it/">Sapienza Università di Roma</a>
+  </p>
+</div>
 
-[![CI](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml/badge.svg)](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/icaro-lab/MASE)](LICENSE)
-[![Status](https://img.shields.io/badge/status-alpha-8a6d3b)](#next-steps)
-[![Icaro Lab](https://img.shields.io/badge/Icaro%20Lab-icaro--lab.com-1f4b43)](https://icaro-lab.com/)
-[![DexAI](https://img.shields.io/badge/DexAI-dexai.eu-7a4c2a)](https://www.dexai.eu/)
-[![Sapienza](https://img.shields.io/badge/Sapienza-uniroma1.it-8f1d2c)](https://www.uniroma1.it/)
-
-**Multi-Agent Simulation Environment**
-
-![MASE multi-agent concept image](docs/assets/mase-concept.jpg)
-
-MASE is a code-first platform for running controlled multi-agent experiments.
-It is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
+MASE is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
 
 The goal is to keep the core model small:
 
