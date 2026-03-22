@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/github/license/icaro-lab/MASE)](LICENSE)
 [![Status](https://img.shields.io/badge/status-alpha-8a6d3b)](#next-steps)
 
+**Multi-Agent Simulation Environment**
+
 MASE is a code-first platform for running controlled multi-agent experiments.
 It is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
 
