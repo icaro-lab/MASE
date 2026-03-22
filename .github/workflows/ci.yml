@@ -3,8 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - dev
-      - feat-public-repo-extraction
+      - main
   pull_request:
 
 jobs:
@@ -16,10 +15,10 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install controller dependencies
-        run: pip install -r services/simulation-controller/requirements.txt
+        run: pip install -r services/controller/requirements.txt
       - name: Run controller tests
-        working-directory: services/simulation-controller
-        run: PYTHONPATH=. pytest tests/test_catalog.py tests/test_config_default_template_resolution.py tests/test_public_runs_routes.py tests/test_run_launcher_frontend_ports.py tests/test_runs_domain_reset.py -q
+        working-directory: services/controller
+        run: PYTHONPATH=. pytest tests/test_catalog.py tests/test_config_default_environment_resolution.py tests/test_public_runs_routes.py tests/test_run_launcher_frontend_ports.py tests/test_runs_domain_reset.py tests/test_public_observability_routes.py -q
 
   admin-backend:
     runs-on: ubuntu-latest

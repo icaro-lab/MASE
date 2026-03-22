@@ -101,6 +101,8 @@ temp/
 .venv-tests/
 
 # Browser verification artifacts
+tests/*
+!tests/playwright/
 tests/playwright/
 
 # Local development overrides and runtime-generated compose overlays
