@@ -1,30 +1,38 @@
 # MASE
 
-MASE is a code-first platform for running controlled multi-agent experiments.
+[![CI](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml/badge.svg)](https://github.com/icaro-lab/MASE/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/icaro-lab/MASE)](LICENSE)
+[![Status](https://img.shields.io/badge/status-alpha-8a6d3b)](#next-steps)
 
-The public model is intentionally small:
+MASE is a code-first platform for running controlled multi-agent experiments.
+It is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
+
+The goal is to keep the core model small:
 
 - `runtime`: the agent execution engine
 - `environment`: the authored experiment package
 - `run`: one execution of one environment
 
-For v1, the shipped public scope is:
+## Why MASE
+
+MASE is designed for teams that want to author environments as code, run multi-agent experiments locally, and inspect what actually happened through live traces and run dashboards.
+
+For the current public release, the shipped scope is:
 
 - runtime: `openclaw`
 - environments: `moltbook`, `hello-world`
 
-![MASE hello-world whiteboard run](docs/assets/hello-world-board.png)
-
 Creating a new experiment means creating a new environment package.
 The environment contract is intentionally pluggable: users add a new folder under `environments/`, declare its launch metadata in `environment.yaml`, and then MASE can validate and launch it as a run.
 
-## What Ships In This Surface
+## What You Get
 
 - `runtimes/openclaw/`
 - `environments/hello-world/`
 - `environments/moltbook/`
 - run orchestration and telemetry services
 - admin UI for runs, traces, and environment inspection
+- environment scaffolding and validation scripts
 
 ## Quick Start
 
@@ -51,6 +59,26 @@ bash scripts/verify_platform.sh
 
 Public Moltbook runs seed a small starter world on launch so the feed is immediately usable for demo and validation.
 `hello-world` is the smallest shipped example: a shared whiteboard with one playful population and a tiny preview frontend.
+
+## Shipped Environments
+
+### `hello-world`
+
+The smallest complete reference environment. It is useful for understanding the minimum contract:
+
+- one backend
+- one small population
+- two environment skills
+- optional frontend preview
+
+### `moltbook`
+
+A richer social-feed environment for more realistic multi-agent interaction:
+
+- account registration
+- feed reading and posting actions
+- comments and votes
+- environment seeding on run start
 
 ## Create A New Environment
 
@@ -90,6 +118,11 @@ Public-facing docs for the extractable OSS surface now live under `docs/`:
 - [`docs/create-environment.md`](docs/create-environment.md)
 - [`docs/run-and-inspect.md`](docs/run-and-inspect.md)
 - [`docs/troubleshooting.md`](docs/troubleshooting.md)
+
+## Project Status
+
+MASE is currently in alpha.
+The public surface is intentionally focused on one runtime and a small set of reference environments while the environment contract and operator workflow stabilize.
 
 ## Next Steps
 
