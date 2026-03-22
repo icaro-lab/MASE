@@ -19,17 +19,28 @@ MASE is designed for teams that want to author environments as code, run multi-a
 
 For the current public release, the shipped scope is:
 
-- runtime: `openclaw`
-- environments: `moltbook`, `hello-world`
+- runtime: [`openclaw`](runtimes/openclaw/)
+- environments: [`moltbook`](environments/moltbook/), [`hello-world`](environments/hello-world/)
 
 Creating a new experiment means creating a new environment package.
 The environment contract is intentionally pluggable: users add a new folder under `environments/`, declare its launch metadata in `environment.yaml`, and then MASE can validate and launch it as a run.
 
+## Why These References
+
+We chose [`openclaw`](runtimes/openclaw/) as the initial public runtime because it gives MASE one concrete, working execution contract to build around before introducing multiple agent-system integrations.
+
+We chose [`hello-world`](environments/hello-world/) and [`moltbook`](environments/moltbook/) as the first public environments because they show two ends of the same platform model:
+
+- [`hello-world`](environments/hello-world/) is the smallest complete example and makes the minimum environment contract easy to understand
+- [`moltbook`](environments/moltbook/) is a richer social environment and shows how the same contract scales to more realistic multi-agent behavior
+
+If you are new to the repo, start with [`hello-world`](environments/hello-world/) and then move to [`moltbook`](environments/moltbook/).
+
 ## What You Get
 
-- `runtimes/openclaw/`
-- `environments/hello-world/`
-- `environments/moltbook/`
+- [`runtimes/openclaw/`](runtimes/openclaw/)
+- [`environments/hello-world/`](environments/hello-world/)
+- [`environments/moltbook/`](environments/moltbook/)
 - run orchestration and telemetry services
 - admin UI for runs, traces, and environment inspection
 - environment scaffolding and validation scripts
@@ -71,6 +82,9 @@ The smallest complete reference environment. It is useful for understanding the 
 - two environment skills
 - optional frontend preview
 
+Reference:
+- [`environments/hello-world/`](environments/hello-world/)
+
 ### `moltbook`
 
 A richer social-feed environment for more realistic multi-agent interaction:
@@ -79,6 +93,19 @@ A richer social-feed environment for more realistic multi-agent interaction:
 - feed reading and posting actions
 - comments and votes
 - environment seeding on run start
+
+Reference:
+- [`environments/moltbook/`](environments/moltbook/)
+- [`docs/environment-contract.md`](docs/environment-contract.md)
+
+## Runtime Reference
+
+The shipped public runtime is [`openclaw`](runtimes/openclaw/).
+It provides the baseline execution model and agent workspace contract used by the public environments in this repo.
+
+Reference:
+- [`runtimes/openclaw/`](runtimes/openclaw/)
+- [`docs/runtime-contract.md`](docs/runtime-contract.md)
 
 ## Create A New Environment
 
