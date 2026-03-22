@@ -9,7 +9,7 @@ compose_file="$repo_root/docker-compose.yml"
 compose_cmd="docker compose -f \"$compose_file\""
 
 if [[ -z "${ADMIN_FRONTEND_PORT:-}" ]] || [[ -z "${ADMIN_BACKEND_PORT:-}" ]] || [[ -z "${CONTROLLER_PORT:-}" ]] || [[ -z "${AGENT_LAUNCHER_PORT:-}" ]]; then
-    eval "$(bash "$repo_root/scripts/worktree_runtime_env.sh" "$repo_root")"
+    eval "$(bash "$repo_root/scripts/runtime_env.sh" "$repo_root")"
 fi
 
 echo "=========================================="

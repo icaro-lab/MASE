@@ -27,8 +27,6 @@ The current branch accepts a plain `OPENROUTER_API_KEY` and forwards it to the c
 bash scripts/up_stack.sh
 ```
 
-This wrapper intentionally keeps the worktree-aware port and network behavior used by the current repo. In the future public repo the wrapper name stays the same, but the implementation will no longer mention worktrees.
-
 ## 3. Verify The Services
 
 ```bash

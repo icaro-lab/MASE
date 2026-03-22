@@ -6,7 +6,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$repo_root"
 
 if [[ -z "${ADMIN_BACKEND_PORT:-}" ]] || [[ -z "${CONTROLLER_PORT:-}" ]]; then
-  eval "$(bash "$repo_root/scripts/worktree_runtime_env.sh" "$repo_root")"
+  eval "$(bash "$repo_root/scripts/runtime_env.sh" "$repo_root")"
 fi
 
 RUN_ID="${1:-}"

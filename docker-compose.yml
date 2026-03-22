@@ -1,7 +1,7 @@
 # =============================================================================
 # MASE (Multi-Agent Simulation Environment) Platform
 # Main Docker Compose Configuration
-# Canonical operator entrypoint: bash scripts/up_worktree_stack.sh
+# Canonical operator entrypoint: bash scripts/up_stack.sh
 # =============================================================================
 
 x-common-variables: &common-variables

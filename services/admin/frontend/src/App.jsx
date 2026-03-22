@@ -10,9 +10,7 @@ import {
 import LandingPage from './features/landing/LandingPage';
 import EnvironmentsPage from './features/environments/EnvironmentsPage';
 import EnvironmentDetailPage from './features/environments/EnvironmentDetailPage';
-import RuntimesPage from './features/runtimes/RuntimesPage';
 import RunsPage from './features/runs/RunsPage';
-import ConfigPage from './features/config/ConfigPage';
 import RunDashboard from './features/runs/RunDashboard';
 import { AppSidebar } from '@/registry/new-york-v4/blocks/sidebar-16/components/app-sidebar';
 import { SiteHeader } from '@/registry/new-york-v4/blocks/sidebar-16/components/site-header';
@@ -56,10 +54,6 @@ function buildCrumbs(pathname) {
     const [, , rawEnvironmentId] = pathname.split('/');
     return [{ label: 'Environments', to: '/environments' }, { label: decodeSegment(rawEnvironmentId) }];
   }
-  if (pathname === '/runtimes') {
-    return [{ label: 'Runtimes' }];
-  }
-  if (pathname === '/config') return [{ label: 'Config' }];
   return [{ label: 'Runs', to: '/runs' }];
 }
 
@@ -123,13 +117,11 @@ function Shell() {
               <Routes>
                 <Route path="/environments" element={<EnvironmentsPage />} />
                 <Route path="/environments/:environment_id" element={<EnvironmentDetailPage />} />
-                <Route path="/runtimes" element={<RuntimesPage />} />
                 <Route path="/runs" element={<RunsPage />} />
                 <Route path="/runs/:run_id" element={<RunRedirect mode="stats" />} />
                 <Route path="/runs/:run_id/stats" element={<RunDashboard mode="stats" />} />
                 <Route path="/runs/:run_id/traces" element={<RunDashboard mode="traces" />} />
                 <Route path="/runs/:run_id/traces/:trace_id" element={<RunDashboard mode="traces" />} />
-                <Route path="/config" element={<ConfigPage />} />
 
                 <Route path="*" element={<Navigate to="/runs" replace />} />
               </Routes>

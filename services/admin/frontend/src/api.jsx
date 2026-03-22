@@ -325,24 +325,5 @@ export const healthApi = {
   },
 };
 
-export const platformSettingsApi = {
-  getOpenRouterSettings: async () => {
-    try {
-      const response = await api.get('/settings/openrouter');
-      return response.data;
-    } catch (error) {
-      handleError(error);
-    }
-  },
-
-  updateOpenRouterSettings: async (openrouterApiKey) => {
-    try {
-      const response = await api.put('/settings/openrouter', { openrouter_api_key: openrouterApiKey });
-      return response.data;
-    } catch (error) {
-      handleError(error);
-    }
-  },
-};
 
 export default api;

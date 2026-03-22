@@ -189,10 +189,6 @@ run_check "canonical environment detail route" \
   "/environments/${ENVIRONMENT_ID}" \
   "${BASE_URL}/environments/${ENVIRONMENT_ID}"
 
-run_check "canonical runtimes route" \
-  "/runtimes" \
-  "${BASE_URL}/runtimes"
-
 run_check "canonical runs route" \
   "/runs" \
   "${BASE_URL}/runs"
@@ -212,10 +208,6 @@ run_check "canonical run traces route" \
 run_check "canonical run trace detail route" \
   "/runs/${RUN_ID}/traces/${TRACE_ID}" \
   "${BASE_URL}/runs/${RUN_ID}/traces/${TRACE_ID}"
-
-run_check "config route" \
-  "/config" \
-  "${BASE_URL}/config"
 
 {
   echo "Summary:"

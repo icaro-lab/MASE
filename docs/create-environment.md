@@ -43,7 +43,7 @@ curl -sf -X POST "http://localhost:${CONTROLLER_PORT}/api/v1/environments/<envir
 10. Build images and launch a run:
 
 ```bash
-bash scripts/build_worktree_runtime_images.sh
+bash scripts/build_images.sh
 curl -sf -X POST "http://localhost:${CONTROLLER_PORT}/api/v1/runs" \
   -H "Content-Type: application/json" \
   -d '{

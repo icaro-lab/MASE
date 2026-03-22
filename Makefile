@@ -2,7 +2,7 @@
 # MASE (Multi-Agent Simulation Environment) - Makefile
 # =============================================================================
 
-.PHONY: help build up down logs shell test clean setup
+.PHONY: help build up down logs shell test clean setup verify env
 
 # Default target
 help:
@@ -53,38 +53,17 @@ env:
 
 build:
 	@echo "Building MASE services..."
-	docker-compose build
+	bash scripts/build_images.sh
 
 build-no-cache:
-	@echo "Building MASE services (no cache)..."
-	docker-compose build --no-cache
+	@echo "Building MASE services (no cache) is not supported by the public helper yet."
+	@exit 1
 
 up:
-	@echo "Starting MASE platform (core services)..."
-	docker-compose up -d
-	@echo "Core services starting..."
-	@echo "Admin Dashboard: http://localhost:3016"
-	@echo "Admin API:       http://localhost:8001"
-	@echo "Controller:      http://localhost:8002"
-	@echo "Agent Launcher:  http://localhost:8004"
-	@echo "Orchestrator:    http://localhost:8006"
-	@echo ""
-	@echo "Note: Per-run services (environments, agents) are started dynamically"
-	@echo "      when runs are created."
+	bash scripts/up_stack.sh
 
 down:
-	@echo "Stopping MASE platform..."
-	docker-compose down
-	@echo "Note: Per-run containers may still be running."
-	@echo "      Use 'make clean-runs' to stop all runs."
-
-core-up:
-	@echo "Starting core platform services only..."
-	docker-compose up -d postgres redis orchestrator controller agent-launcher admin-backend admin-frontend
-
-core-down:
-	@echo "Stopping core platform services..."
-	docker-compose down postgres redis orchestrator controller agent-launcher admin-backend admin-frontend
+	bash scripts/down_stack.sh
 
 restart: down up
 
@@ -97,47 +76,47 @@ restart-service:
 # =============================================================================
 
 logs:
-	docker-compose logs -f
+	docker compose -f docker-compose.yml logs -f
 
 logs-admin-backend:
-	docker-compose logs -f admin-backend
+	docker compose -f docker-compose.yml logs -f admin-backend
 
 logs-admin-frontend:
-	docker-compose logs -f admin-frontend
+	docker compose -f docker-compose.yml logs -f admin-frontend
 
 logs-controller:
-	docker-compose logs -f controller
+	docker compose -f docker-compose.yml logs -f controller
 
 logs-agent-launcher:
-	docker-compose logs -f agent-launcher
+	docker compose -f docker-compose.yml logs -f agent-launcher
 
 logs-orchestrator:
-	docker-compose logs -f orchestrator
+	docker compose -f docker-compose.yml logs -f orchestrator
 
 logs-postgres:
-	docker-compose logs -f postgres
+	docker compose -f docker-compose.yml logs -f postgres
 
 logs-redis:
-	docker-compose logs -f redis
+	docker compose -f docker-compose.yml logs -f redis
 
 # =============================================================================
 # Shell Access
 # =============================================================================
 
 shell-admin-backend:
-	docker-compose exec admin-backend /bin/bash
+	docker compose -f docker-compose.yml exec admin-backend /bin/bash
 
 shell-controller:
-	docker-compose exec controller /bin/bash
+	docker compose -f docker-compose.yml exec controller /bin/bash
 
 shell-agent-launcher:
-	docker-compose exec agent-launcher /bin/bash
+	docker compose -f docker-compose.yml exec agent-launcher /bin/bash
 
 shell-orchestrator:
-	docker-compose exec orchestrator /bin/bash
+	docker compose -f docker-compose.yml exec orchestrator /bin/bash
 
 shell-postgres:
-	docker-compose exec postgres psql -U mase -d mase
+	docker compose -f docker-compose.yml exec postgres psql -U mase -d mase
 
 # =============================================================================
 # Testing
@@ -156,10 +135,7 @@ test-integration:
 # =============================================================================
 
 clean:
-	@echo "Stopping and removing core containers..."
-	docker-compose down -v
-	@echo "Core containers removed. Per-run containers may still be active."
-	@echo "Run 'make clean-runs' to stop all runs."
+	bash scripts/down_stack.sh
 
 clean-runs:
 	@echo "Stopping all per-run containers..."
@@ -169,7 +145,7 @@ clean-runs:
 
 clean-all: clean clean-runs
 	@echo "Removing images..."
-	docker-compose down --rmi all
+	docker compose -f docker-compose.yml down --rmi all
 	docker system prune -f
 
 # =============================================================================
@@ -177,17 +153,10 @@ clean-all: clean clean-runs
 # =============================================================================
 
 ps:
-	docker-compose ps
+	docker compose -f docker-compose.yml ps
 
 status:
-	@echo "MASE Platform Status:"
-	@docker-compose ps
-	@echo ""
-	@echo "Health Checks:"
-	@curl -s http://localhost:8001/health 2>/dev/null && echo " ✓ admin-backend" || echo " ✗ admin-backend"
-	@curl -s http://localhost:8002/health 2>/dev/null && echo " ✓ controller" || echo " ✗ controller"
-	@curl -s http://localhost:8004/health 2>/dev/null && echo " ✓ agent-launcher" || echo " ✗ agent-launcher"
-	@curl -s http://localhost:8006/health 2>/dev/null && echo " ✓ orchestrator" || echo " ✗ orchestrator"
+	bash scripts/verify_platform.sh
 
 migrate:
 	@echo "Running database migrations..."

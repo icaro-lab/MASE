@@ -5,7 +5,7 @@ Scope: `services/admin/frontend` shell and route inventory.
 ## Shell
 
 - `App.jsx` uses `AppSidebar` and `SiteHeader` from `src/registry/new-york-v4/blocks/sidebar-16/`.
-- The shell now covers only the operator surfaces: `/runs`, `/environments`, `/runtimes`, `/config`.
+- The shell now covers only the operator surfaces: `/runs` and `/environments`.
 - `/` is a standalone landing page outside the shell.
 - Docs UI, legacy operator screens, and the sidebar user footer were removed.
 
@@ -39,14 +39,6 @@ Scope: `services/admin/frontend` shell and route inventory.
 - `/environments/:environment_id`
   - `features/environments/EnvironmentDetailPage.jsx`
   - `badge`, `button`, `card`, `input`, `label`, `select`
-
-- `/runtimes`
-  - `features/runtimes/RuntimesPage.jsx`
-  - `badge`, `card`
-
-- `/config`
-  - `features/config/ConfigPage.jsx`
-  - `alert`, `alert-dialog`, `button`, `card`, `field`, `form`, `input`, `scroll-area`, `table`
 
 ## Notes
 

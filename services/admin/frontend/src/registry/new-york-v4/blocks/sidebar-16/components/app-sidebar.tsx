@@ -4,7 +4,6 @@ import * as React from "react"
 import {
   LayoutGrid,
   Play,
-  Settings2,
 } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -36,11 +35,6 @@ const data = {
       items: [
         { title: "All Environments", url: "/environments" },
       ],
-    },
-    {
-      title: "Config",
-      url: "/config",
-      icon: Settings2,
     },
   ],
   navSecondary: [] as { title: string; url: string; icon: React.ComponentType }[],

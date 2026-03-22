@@ -86,7 +86,7 @@ Rules:
 - `launch.images.*.dockerfile` and `launch.images.*.context` must stay inside `environments/<environment-id>/`.
 - backend image metadata is required.
 - frontend image metadata is required only if `frontend_service` is declared.
-- `scripts/build_worktree_runtime_images.sh` scans these image definitions and builds `<repository>:<compose-project>`.
+- `scripts/build_images.sh` scans these image definitions and builds `<repository>:<compose-project>`.
 - MASE hashes the current environment package directly at run launch. No separate version snapshot directory is required.
 
 ## Backend Endpoints

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bot, LayoutGrid, Play, Settings2 } from 'lucide-react';
+import { ArrowRight, Bot, LayoutGrid, Play, TerminalSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -99,9 +99,9 @@ export default function LandingPage() {
               description="Support reusable execution systems without turning experiment-local agent roles into global templates."
             />
             <ConceptCard
-              icon={Settings2}
+              icon={TerminalSquare}
               title="Operator workflow"
-              description="Use MASE as a lean operator console: launch runs, inspect behavior, and iterate environments."
+              description="Use MASE as a lean operator console: launch runs, inspect behavior, and iterate on environments."
             />
           </div>
         </section>

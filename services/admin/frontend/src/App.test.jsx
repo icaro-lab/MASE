@@ -16,16 +16,8 @@ vi.mock('./features/environments/EnvironmentDetailPage', () => ({
   default: () => <div>environment-detail-page</div>,
 }));
 
-vi.mock('./features/runtimes/RuntimesPage', () => ({
-  default: () => <div>runtimes-page</div>,
-}));
-
 vi.mock('./features/runs/RunsPage', () => ({
   default: () => <div>runs-page</div>,
-}));
-
-vi.mock('./features/config/ConfigPage', () => ({
-  default: () => <div>config-page</div>,
 }));
 
 vi.mock('./features/runs/RunDashboard', () => ({
@@ -106,11 +98,11 @@ describe('App routing', () => {
     expect(window.location.pathname).toBe('/runs/run-1/traces/trace-1');
   });
 
-  it('keeps config reachable from the shell', async () => {
+  it('redirects removed shell routes to runs', async () => {
     renderAt('/config');
     await waitFor(() => {
-      expect(screen.getByText('config-page')).toBeInTheDocument();
+      expect(screen.getByText('runs-page')).toBeInTheDocument();
     });
-    expect(window.location.pathname).toBe('/config');
+    expect(window.location.pathname).toBe('/runs');
   });
 });
