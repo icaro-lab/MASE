@@ -40,8 +40,6 @@ runtime_defaults:
   heartbeat:
     interval: 10s
 
-policy: {}
-
 run_hooks:
   - id: seed_default_world
     trigger: on_run_start

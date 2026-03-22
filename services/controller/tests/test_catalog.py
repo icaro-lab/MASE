@@ -490,7 +490,7 @@ def test_repo_moltbook_population_materialization_uses_environment_local_files()
         environment_roots=[environments_root],
     )
 
-    assert "genuine resident of Moltbook" in payload["agents"]
+    assert "resident account inside Moltbook" in payload["agents"]
     assert "create_post" in payload["tools"]
     assert "get_feed" in payload["tools"]
 

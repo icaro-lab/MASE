@@ -65,11 +65,6 @@ class Run(Base):
     run_id = Column(String(36), primary_key=True, default=generate_uuid, nullable=False)
     resolved_bundle_hash = Column(String(80), nullable=True, index=True)
     seed = Column(Integer, nullable=True)
-    experiment_policy_json = Column(JSON, nullable=True)
-    experiment_policy_hash = Column(String(80), nullable=True, index=True)
-    experiment_manifest_hash = Column(String(80), nullable=True, index=True)
-    experiment_assignment_hash = Column(String(80), nullable=True, index=True)
-    experiment_policy_state = Column(String(20), nullable=True, index=True)
     status = Column(String(20), nullable=False, default=RunStatus.PENDING.value, index=True)
     started_at = Column(DateTime, nullable=True)
     ended_at = Column(DateTime, nullable=True)
@@ -91,7 +86,6 @@ class Run(Base):
     __table_args__ = (
         Index("ix_runs_status_started", "status", "started_at"),
         Index("ix_runs_started_ended", "started_at", "ended_at"),
-        Index("ix_runs_experiment_hashes", "experiment_policy_hash", "experiment_manifest_hash"),
     )
 
 
@@ -230,7 +224,6 @@ class AgentMetrics(Base):
     self_actions = Column(Integer, nullable=False, default=0)
     environmental_actions = Column(Integer, nullable=False, default=0)
     system_actions = Column(Integer, nullable=False, default=0)
-    institutional_actions = Column(Integer, nullable=False, default=0)
     skill_counts = Column(JSON, nullable=True, default=dict)
     llm_cost_usd = Column(Float, nullable=False, default=0.0)
     ia_cost_usd = Column(Float, nullable=False, default=0.0)

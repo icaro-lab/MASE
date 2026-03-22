@@ -12,7 +12,9 @@ app = FastAPI(title="Hello World Backend", version="0.1.0")
 SKILL_MD_PATH = Path("/app/skill.md")
 TOKEN_LOCK = Lock()
 BOARD_LOCK = Lock()
+RUN_LOCK = Lock()
 REGISTERED_TOKENS: dict[str, dict[str, str]] = {}
+RUN_CONTEXT: dict[str, dict[str, object]] = {}
 BOARD_NOTES: list[dict[str, str]] = [
     {
         "id": "starter-1",
@@ -40,6 +42,14 @@ class NoteCreateRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=140)
 
 
+class RunInitRequest(BaseModel):
+    run_id: str
+    environment_id: str | None = None
+    params: dict | None = None
+    assignment: dict | None = None
+    assignment_map: dict | None = None
+
+
 def _require_token(authorization: str | None) -> dict[str, str]:
     token = str(authorization or "").removeprefix("Bearer ").strip()
     with TOKEN_LOCK:
@@ -64,6 +74,7 @@ async def contract() -> dict:
             "health_check",
             "contract_discovery",
             "skill_documentation",
+            "run_lifecycle",
             "action_api",
         ],
         "description": "A tiny shared whiteboard environment for demonstrating the minimum MASE environment contract.",
@@ -72,6 +83,8 @@ async def contract() -> dict:
             {"path": "/contract", "method": "GET", "description": "Environment contract"},
             {"path": "/skill.md", "method": "GET", "description": "Runtime bootstrap skill document"},
             {"path": "/auth/register", "method": "POST", "description": "Register one runtime agent"},
+            {"path": "/run/init", "method": "POST", "description": "Initialize run-scoped environment context"},
+            {"path": "/run/reset", "method": "POST", "description": "Reset run-scoped environment context"},
             {"path": "/api/v1/board", "method": "GET", "description": "Read the current whiteboard"},
             {"path": "/api/v1/board/notes", "method": "POST", "description": "Add one short note to the board"},
         ],
@@ -104,6 +117,52 @@ async def register_agents(request: BatchRegisterRequest) -> dict[str, list[dict[
     return {"results": results}
 
 
+@app.post("/run/init")
+async def run_init(request: RunInitRequest) -> dict[str, object]:
+    with RUN_LOCK:
+        if request.run_id in RUN_CONTEXT:
+            RUN_CONTEXT[request.run_id].update(
+                {
+                    "environment_id": request.environment_id,
+                    "params": dict(request.params or {}),
+                    "assignment": dict(request.assignment or {}),
+                    "assignment_map": dict(request.assignment_map or {}),
+                }
+            )
+            return {
+                "status": "ok",
+                "run_id": request.run_id,
+                "environment_id": request.environment_id,
+                "idempotent": True,
+            }
+
+        RUN_CONTEXT[request.run_id] = {
+            "environment_id": request.environment_id,
+            "params": dict(request.params or {}),
+            "assignment": dict(request.assignment or {}),
+            "assignment_map": dict(request.assignment_map or {}),
+        }
+
+    return {
+        "status": "ok",
+        "run_id": request.run_id,
+        "environment_id": request.environment_id,
+        "idempotent": False,
+    }
+
+
+@app.post("/run/reset")
+async def run_reset(request: RunInitRequest | None = None) -> dict[str, object]:
+    cleared = 0
+    with RUN_LOCK:
+        if request and request.run_id:
+            cleared = 1 if RUN_CONTEXT.pop(request.run_id, None) is not None else 0
+        else:
+            cleared = len(RUN_CONTEXT)
+            RUN_CONTEXT.clear()
+    return {"status": "ok", "cleared": cleared}
+
+
 @app.get("/api/v1/board")
 async def get_board() -> dict:
     with BOARD_LOCK:
@@ -128,6 +187,8 @@ async def add_note(
     with BOARD_LOCK:
         if len(BOARD_NOTES) >= 32:
             raise HTTPException(status_code=409, detail="Whiteboard is full")
+        if any(note.get("author") == actor["name"] for note in BOARD_NOTES):
+            raise HTTPException(status_code=409, detail="Agent already posted a note")
         note = {
             "id": f"note-{uuid4()}",
             "author": actor["name"],

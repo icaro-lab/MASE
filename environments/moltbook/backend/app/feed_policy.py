@@ -7,7 +7,7 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 
 from app.core.database import run_context
-from app.models.run_policy_state import RunPolicyState
+from app.models.run_context_state import RunContextState
 
 
 @dataclass(frozen=True)
@@ -35,14 +35,12 @@ def load_feed_presentation_policy(db: Session, request: Optional[Request] = None
     if not run_id:
         return FeedPresentationPolicy()
 
-    state = db.query(RunPolicyState).filter(RunPolicyState.run_id == run_id).first()
+    state = db.query(RunContextState).filter(RunContextState.run_id == run_id).first()
     if state is None:
         return FeedPresentationPolicy()
 
-    policy_json = state.policy_json if isinstance(state.policy_json, dict) else {}
-    env_block = policy_json.get("env") if isinstance(policy_json.get("env"), dict) else {}
-    env_payload = env_block.get("moltbook") if isinstance(env_block.get("moltbook"), dict) else {}
-    feed_payload = env_payload.get("feed") if isinstance(env_payload.get("feed"), dict) else {}
+    params_json = state.params_json if isinstance(state.params_json, dict) else {}
+    feed_payload = params_json.get("feed") if isinstance(params_json.get("feed"), dict) else {}
 
     vote_visibility = str(feed_payload.get("vote_visibility") or "visible").strip().lower()
     if vote_visibility not in {"visible", "hidden", "agent_hidden"}:

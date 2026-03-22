@@ -142,7 +142,6 @@ class HeartbeatScheduler:
         self._agent_tokens: Dict[str, str] = {}
         self._agent_models: Dict[str, str] = {}
         self._agent_environment_auth_registry: Dict[str, Dict[str, str]] = {}
-        self._heartbeat_cycle_lock: asyncio.Lock = asyncio.Lock()
         
     def initialize(self, 
                    interval: str = "5m",

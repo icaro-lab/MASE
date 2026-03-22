@@ -172,8 +172,4 @@ def build_run_response(
         runtime_limit_minutes=runtime_limit_minutes,
         agent_count=agent_count,
         initialized_agents=initialized_agents,
-        experiment_policy_hash=str(getattr(run, "experiment_policy_hash", "") or "") or None,
-        experiment_manifest_hash=str(getattr(run, "experiment_manifest_hash", "") or "") or None,
-        experiment_assignment_hash=str(getattr(run, "experiment_assignment_hash", "") or "") or None,
-        experiment_policy_state=str(getattr(run, "experiment_policy_state", "") or "") or None,
     )

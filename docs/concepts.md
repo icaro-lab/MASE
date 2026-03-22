@@ -15,7 +15,7 @@ A runtime defines how agent folders execute:
 - baseline tool families
 - required population files
 - heartbeat behavior
-- workspace and execution policy
+- workspace conventions and execution loop
 
 For v1, the public runtime is `openclaw`.
 

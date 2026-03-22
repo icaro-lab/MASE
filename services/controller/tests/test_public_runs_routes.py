@@ -75,10 +75,6 @@ def _seed_public_run(db_session) -> str:
         seed=42,
         status="running",
         started_at=datetime(2026, 3, 4, 12, 0, 0, tzinfo=timezone.utc),
-        experiment_policy_hash="sha256:policy",
-        experiment_manifest_hash="sha256:manifest",
-        experiment_assignment_hash="sha256:assignment",
-        experiment_policy_json={"policy_version": "1.0"},
     )
     db_session.add(run)
     db_session.flush()
@@ -94,17 +90,6 @@ def _seed_public_run(db_session) -> str:
                 "runtime_id": "openclaw",
                 "agent_count": 2,
                 "agent_model": "openai/gpt-5-mini",
-                "experiment_policy": {
-                    "core": {
-                        "population_groups": {
-                            "resident": {
-                                "share": 1.0,
-                                "runtime_id": "openclaw",
-                                "model_id": "openai/gpt-5-mini",
-                            }
-                        }
-                    }
-                },
                 "population_specs": {
                     "resident": {
                         "count": 2,

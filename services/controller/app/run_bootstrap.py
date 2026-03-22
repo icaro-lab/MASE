@@ -5,13 +5,11 @@ from __future__ import annotations
 import asyncio
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime, timezone
 import hashlib
 import json
 import logging
 import random
 import re
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
@@ -24,18 +22,6 @@ from app.database import (
     RunAgentAssignment as RunAgentAssignmentDB,
     RunEnvironmentAssignment as RunEnvironmentAssignmentDB,
 )
-from app.experiment_compiler import (
-    EXPERIMENT_COMPILER_VERSION,
-    compile_policy_with_group_overrides,
-    compute_compiled_experiment_hash,
-)
-from app.experiment_policy import (
-    ExperimentPolicyError,
-    build_policy_snapshot,
-    compute_assignment_hash,
-    hash_canonical_json,
-    validate_policy_shape_from_environment_config,
-)
 from app.heartbeat_contract import resolve_scheduler_heartbeat_timeout
 from app.package_hashes import (
     PACKAGE_KIND_RUNTIME,
@@ -43,12 +29,16 @@ from app.package_hashes import (
     normalize_environment_ref,
     resolve_runtime_heartbeat_interval,
     resolve_package_hash,
-    resolve_package_hash_from_filesystem,
-    package_root,
 )
 
 
 logger = logging.getLogger(__name__)
+
+
+def _hash_canonical_json(payload: Dict[str, Any]) -> str:
+    return "sha256:" + hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def _normalize_optional_text(value: Any) -> Optional[str]:
@@ -69,80 +59,6 @@ def _coerce_int(value: Any, default: int = 0) -> int:
         return default
 
 
-def _coerce_positive_share(value: Any, *, field_name: str) -> float:
-    if isinstance(value, bool):
-        raise ValueError(f"{field_name} must be numeric and > 0")
-    try:
-        share = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"{field_name} must be numeric and > 0") from exc
-    if share <= 0:
-        raise ValueError(f"{field_name} must be > 0")
-    return share
-
-
-def _deep_merge_dict(base: Dict[str, Any], patch: Dict[str, Any]) -> Dict[str, Any]:
-    merged = dict(base or {})
-    for key, value in (patch or {}).items():
-        if isinstance(value, dict) and isinstance(merged.get(key), dict):
-            merged[key] = _deep_merge_dict(merged.get(key) or {}, value)
-        else:
-            merged[key] = value
-    return merged
-
-
-def _resolve_environment_content_hash(
-    *,
-    environment_ref: str,
-    db: Optional[Session],
-) -> Tuple[str, Optional[str]]:
-    environment_id = normalize_environment_ref(environment_ref)
-    if not environment_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid environment_ref: unable to resolve environment id",
-        )
-
-    resolved_content_hash: Optional[str] = None
-    try:
-        resolved_content_hash = resolve_package_hash(
-            db,
-            kind=PACKAGE_KIND_ENVIRONMENT,
-            package_id=environment_id,
-        )
-    except Exception:
-        try:
-            resolved_content_hash = resolve_package_hash_from_filesystem(
-                kind=PACKAGE_KIND_ENVIRONMENT,
-                package_id=environment_id,
-            )
-        except Exception:
-            resolved_content_hash = None
-
-    return environment_id, resolved_content_hash
-
-
-def build_run_policy_snapshot(
-    *,
-    environment_id: str,
-    environment_content_hash: Optional[str],
-    environment_config: Optional[Dict[str, Any]],
-) -> Optional[Dict[str, Any]]:
-    _ = environment_content_hash
-    packages_root = package_root(PACKAGE_KIND_ENVIRONMENT, environment_id).parent
-    return build_policy_snapshot(
-        environment_name=environment_id,
-        environment_config=environment_config,
-        environment_id=environment_id,
-        environments_root=packages_root,
-    )
-
-
-def _default_experiment_policy(environment_id: str) -> Optional[Dict[str, Any]]:
-    _ = environment_id
-    return None
-
-
 def normalize_environment_config_for_run(
     *,
     environment_ref: str,
@@ -150,184 +66,58 @@ def normalize_environment_config_for_run(
     db: Optional[Session] = None,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]], Optional[str], Optional[str]]:
     """Normalize environment config for the public environment-run path."""
+    _ = environment_ref, db
     if environment_config is not None and not isinstance(environment_config, dict):
         raise HTTPException(status_code=400, detail="environment_config must be an object when provided")
     if not isinstance(environment_config, dict):
         return environment_config, None, None, None
-
-    normalized_env_config = deepcopy(environment_config)
-    environment_id, environment_content_hash = _resolve_environment_content_hash(
-        environment_ref=environment_ref,
-        db=db,
-    )
-    if (
-        "experiment_policy" not in normalized_env_config
-        or normalized_env_config.get("experiment_policy") is None
-    ):
-        default_policy = _default_experiment_policy(environment_id)
-        if default_policy is not None:
-            normalized_env_config["experiment_policy"] = deepcopy(default_policy)
-
-    try:
-        inline_policy = validate_policy_shape_from_environment_config(normalized_env_config)[0]
-    except ExperimentPolicyError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Experiment policy preview validation failed ({exc.code}): {exc}",
-        ) from exc
-
-    if inline_policy is None:
-        normalized_env_config.pop("experiment_policy_preview", None)
-        return normalized_env_config, None, None, None
-
-    group_overrides = (
-        ((inline_policy.get("core") or {}).get("group_overrides"))
-        if isinstance(inline_policy.get("core"), dict)
-        else {}
-    )
-    compiled_policy = compile_policy_with_group_overrides(
-        base_policy_json=inline_policy,
-        group_overrides=group_overrides if isinstance(group_overrides, dict) else {},
-    )
-    normalized_env_config["experiment_policy"] = compiled_policy
-
-    snapshot = build_run_policy_snapshot(
-        environment_id=environment_id,
-        environment_content_hash=environment_content_hash,
-        environment_config=normalized_env_config,
-    )
-    if not snapshot:
-        normalized_env_config.pop("experiment_policy_preview", None)
-        return normalized_env_config, None, "inline_legacy", None
-
-    compiled_snapshot_hash = compute_compiled_experiment_hash(
-        environment_ref=environment_ref,
-        policy_hash=snapshot.get("policy_hash"),
-        manifest_hash=snapshot.get("manifest_hash"),
-        compile_source="inline_legacy",
-    )
-    preview = {
-        "environment_id": environment_id,
-        "environment_content_hash": environment_content_hash,
-        "policy_hash": snapshot.get("policy_hash"),
-        "manifest_hash": snapshot.get("manifest_hash"),
-        "policy_version": snapshot.get("policy_version"),
-        "manifest_present": bool(snapshot.get("manifest_present")),
-        "compile_source": "inline_legacy",
-        "compiler_version": EXPERIMENT_COMPILER_VERSION,
-        "compiled_snapshot_hash": compiled_snapshot_hash,
-        "validated_at": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z"),
-    }
-    normalized_env_config["experiment_policy_preview"] = preview
-    return normalized_env_config, preview, "inline_legacy", compiled_snapshot_hash
-
-
-def _resolve_population_groups_for_assignment(
-    env_config: Dict[str, Any],
-) -> Dict[str, Dict[str, Any]]:
-    policy_payload = env_config.get("experiment_policy")
-    if not isinstance(policy_payload, dict):
-        return {}
-    core_payload = policy_payload.get("core")
-    if not isinstance(core_payload, dict):
-        return {}
-
-    raw_population_groups = core_payload.get("population_groups")
-    if not isinstance(raw_population_groups, dict) or not raw_population_groups:
-        return {}
-
-    raw_group_overrides = core_payload.get("group_overrides")
-    if not isinstance(raw_group_overrides, dict):
-        raw_group_overrides = {}
-
-    normalized_groups: Dict[str, Dict[str, Any]] = {}
-    total_share = 0.0
-    for raw_group_name in sorted(raw_population_groups.keys(), key=lambda item: str(item)):
-        group_name = _normalize_optional_text(raw_group_name)
-        if not group_name:
-            raise ValueError("experiment_policy.core.population_groups has empty group keys")
-        if group_name in normalized_groups:
-            raise ValueError(f"Duplicate population group key after normalization: {group_name}")
-
-        base_payload = raw_population_groups.get(raw_group_name)
-        if not isinstance(base_payload, dict):
-            raise ValueError(f"population_groups.{group_name} must be an object")
-
-        override_payload = raw_group_overrides.get(group_name)
-        if override_payload is None and raw_group_name in raw_group_overrides:
-            override_payload = raw_group_overrides.get(raw_group_name)
-        if not isinstance(override_payload, dict):
-            override_payload = {}
-        resolved_payload = _deep_merge_dict(base_payload, override_payload)
-
-        share = _coerce_positive_share(
-            resolved_payload.get("share"),
-            field_name=f"population_groups.{group_name}.share",
-        )
-        runtime_id = _normalize_optional_text(resolved_payload.get("runtime_id"))
-        model_id = _normalize_optional_text(resolved_payload.get("model_id"))
-        role_label = _normalize_optional_text(
-            resolved_payload.get("role_label") or resolved_payload.get("role")
-        )
-        if not runtime_id:
-            raise ValueError(f"population_groups.{group_name}.runtime_id is required")
-        if not model_id:
-            raise ValueError(f"population_groups.{group_name}.model_id is required")
-
-        normalized_groups[group_name] = {
-            "share": share,
-            "runtime_id": runtime_id,
-            "model_id": model_id,
-            "role_label": role_label,
-        }
-        total_share += share
-
-    if abs(total_share - 1.0) > 1e-9:
-        raise ValueError(
-            "population_groups share sum must equal 1.0 "
-            f"(received {total_share:.12f})"
-        )
-
-    return normalized_groups
+    return deepcopy(environment_config), None, None, None
 
 
 def _derive_assignment_rng_seed(run_seed: Optional[int], assignment_plan_hash: str) -> int:
     seed_payload = {
         "run_seed": int(run_seed) if isinstance(run_seed, int) else run_seed,
         "assignment_plan_hash": assignment_plan_hash,
-        "algorithm": "population_mix_v1",
+        "algorithm": "population_specs_v1",
     }
-    seed_hash = hash_canonical_json(seed_payload)
+    seed_hash = _hash_canonical_json(seed_payload)
     digest = seed_hash.split(":", 1)[1]
     return int(digest[:16], 16)
 
 
-def _allocate_group_counts(
-    *,
-    agent_count: int,
-    resolved_groups: Dict[str, Dict[str, Any]],
-) -> Dict[str, int]:
-    if agent_count <= 0 or not resolved_groups:
-        return {group_name: 0 for group_name in sorted(resolved_groups.keys())}
+def _resolve_population_specs_for_assignment(env_config: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    raw_population_specs = env_config.get("population_specs")
+    if not isinstance(raw_population_specs, dict) or not raw_population_specs:
+        raise ValueError("environment_config.population_specs must be a non-empty object")
 
-    counts: Dict[str, int] = {}
-    remainders: List[Tuple[float, str]] = []
-    for group_name in sorted(resolved_groups.keys()):
-        share = float(resolved_groups[group_name].get("share") or 0.0)
-        exact = share * agent_count
-        whole = int(exact)
-        counts[group_name] = whole
-        remainders.append((exact - whole, group_name))
+    default_runtime_id = _normalize_optional_text(env_config.get("runtime_id")) or "openclaw"
+    default_model_id = _normalize_optional_text(env_config.get("agent_model")) or "openai/gpt-5-mini"
 
-    remaining = agent_count - sum(counts.values())
-    ordered_remainders = sorted(remainders, key=lambda item: (-item[0], item[1]))
-    index = 0
-    while remaining > 0 and ordered_remainders:
-        group_name = ordered_remainders[index % len(ordered_remainders)][1]
-        counts[group_name] += 1
-        remaining -= 1
-        index += 1
-    return counts
+    population_specs: Dict[str, Dict[str, Any]] = {}
+    for raw_population_id in sorted(raw_population_specs.keys(), key=lambda item: str(item)):
+        population_id = _normalize_optional_text(raw_population_id)
+        if not population_id:
+            raise ValueError("population_specs contains an empty population id")
+        spec = raw_population_specs.get(raw_population_id)
+        if not isinstance(spec, dict):
+            raise ValueError(f"population_specs.{population_id} must be an object")
+
+        count = _coerce_int(spec.get("count"), default=0)
+        if count <= 0:
+            continue
+        runtime_id = _normalize_optional_text(spec.get("runtime_id")) or default_runtime_id
+        model_id = _normalize_optional_text(spec.get("model_id")) or default_model_id
+        role_label = _normalize_optional_text(spec.get("role_label")) or population_id
+        population_specs[population_id] = {
+            "count": count,
+            "runtime_id": runtime_id,
+            "model_id": model_id,
+            "role_label": role_label,
+        }
+
+    if not population_specs:
+        raise ValueError("Resolved population count is zero")
+    return population_specs
 
 
 def _runtime_agent_sort_key(agent_id: str) -> Tuple[int, Any]:
@@ -339,44 +129,36 @@ def _runtime_agent_sort_key(agent_id: str) -> Tuple[int, Any]:
 
 def _build_population_assignment_map(
     *,
-    agent_count: int,
+    population_specs: Dict[str, Dict[str, Any]],
     run_seed: Optional[int],
     assignment_plan_hash: str,
-    resolved_groups: Dict[str, Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
-    if agent_count <= 0:
+    if not population_specs:
         return {}
-    if not resolved_groups:
-        raise ValueError("resolved_groups is required for mixed-pop assignment")
 
-    counts = _allocate_group_counts(agent_count=agent_count, resolved_groups=resolved_groups)
     assignment_rows: List[Dict[str, Any]] = []
-    for group_name in sorted(counts.keys()):
-        group_payload = resolved_groups[group_name]
-        for _ in range(max(counts[group_name], 0)):
+    for population_id in sorted(population_specs.keys()):
+        population_payload = population_specs[population_id]
+        for _ in range(max(int(population_payload.get("count") or 0), 0)):
             assignment_rows.append(
                 {
-                    "population_group": group_name,
-                    "role_label": _normalize_optional_text(group_payload.get("role_label")),
-                    "runtime_id": _normalize_optional_text(group_payload.get("runtime_id")),
-                    "content_hash": _normalize_optional_text(group_payload.get("content_hash")),
-                    "model_id": _normalize_optional_text(group_payload.get("model_id")),
+                    "population_group": population_id,
+                    "role_label": _normalize_optional_text(population_payload.get("role_label")),
+                    "runtime_id": _normalize_optional_text(population_payload.get("runtime_id")),
+                    "content_hash": _normalize_optional_text(population_payload.get("content_hash")),
+                    "model_id": _normalize_optional_text(population_payload.get("model_id")),
                 }
             )
 
-    if len(assignment_rows) != agent_count:
-        raise ValueError(
-            "population assignment count mismatch "
-            f"(expected {agent_count}, received {len(assignment_rows)})"
-        )
+    if not assignment_rows:
+        return {}
 
-    runtime_agent_ids = [f"agent-{idx + 1}" for idx in range(agent_count)]
     rng = random.Random(_derive_assignment_rng_seed(run_seed, assignment_plan_hash))
-    rng.shuffle(runtime_agent_ids)
+    rng.shuffle(assignment_rows)
 
     assignment_map: Dict[str, Dict[str, Any]] = {}
-    for idx, runtime_agent_id in enumerate(runtime_agent_ids):
-        row = assignment_rows[idx]
+    for idx, row in enumerate(assignment_rows):
+        runtime_agent_id = f"agent-{idx + 1}"
         role_label = _normalize_optional_text(row.get("role_label"))
         assignment_map[runtime_agent_id] = {
             "runtime_id": row.get("runtime_id"),
@@ -423,62 +205,35 @@ def persist_run_assignments(
             package_id=default_runtime_id,
         )
     default_model_id = _normalize_optional_text(env_config.get("agent_model")) or "openai/gpt-5-mini"
-
-    agent_count = _coerce_int(env_config.get("agent_count"), default=0)
-    if agent_count < 0:
-        agent_count = 0
-
-    population_groups = _resolve_population_groups_for_assignment(
-        env_config,
-    )
-    if population_groups:
-        for group_name in sorted(population_groups.keys()):
-            group_payload = population_groups[group_name]
-            group_runtime_id = str(group_payload.get("runtime_id") or "").strip()
-            if not group_runtime_id:
-                raise ValueError(f"population_groups.{group_name}.runtime_id is required")
-            if use_agent_draft:
-                group_payload["content_hash"] = None
-            else:
-                group_content_hash = resolve_package_hash(
-                    db,
-                    kind=PACKAGE_KIND_RUNTIME,
-                    package_id=group_runtime_id,
-                )
-                group_payload["content_hash"] = group_content_hash
+    population_specs = _resolve_population_specs_for_assignment(env_config)
+    agent_count = sum(int(spec.get("count") or 0) for spec in population_specs.values())
+    for population_id in sorted(population_specs.keys()):
+        population_payload = population_specs[population_id]
+        runtime_id = str(population_payload.get("runtime_id") or "").strip()
+        if not runtime_id:
+            raise ValueError(f"population_specs.{population_id}.runtime_id is required")
+        if use_agent_draft:
+            population_payload["content_hash"] = None
+        else:
+            population_payload["content_hash"] = resolve_package_hash(
+                db,
+                kind=PACKAGE_KIND_RUNTIME,
+                package_id=runtime_id,
+            )
 
     assignment_plan_payload = {
-        "algorithm": "population_mix_v1",
+        "algorithm": "population_specs_v1",
         "run_seed": int(run.seed) if isinstance(run.seed, int) else run.seed,
         "environment_id": environment_id,
         "environment_content_hash": env_content_hash,
-        "agent_count": agent_count,
-        "default_runtime_id": default_runtime_id,
-        "default_runtime_content_hash": runtime_content_hash,
-        "default_model_id": default_model_id,
-        "population_groups": population_groups,
+        "population_specs": population_specs,
     }
-    assignment_plan_hash = hash_canonical_json(assignment_plan_payload)
-
-    if population_groups:
-        assignment_map = _build_population_assignment_map(
-            agent_count=agent_count,
-            run_seed=run.seed,
-            assignment_plan_hash=assignment_plan_hash,
-            resolved_groups=population_groups,
-        )
-    else:
-        assignment_map = {}
-        for idx in range(agent_count):
-            runtime_agent_id = f"agent-{idx + 1}"
-            assignment_map[runtime_agent_id] = {
-                "runtime_id": default_runtime_id,
-                "content_hash": runtime_content_hash,
-                "population_group": None,
-                "role_label": None,
-                "role": None,
-                "model_id": default_model_id,
-            }
+    assignment_plan_hash = _hash_canonical_json(assignment_plan_payload)
+    assignment_map = _build_population_assignment_map(
+        population_specs=population_specs,
+        run_seed=run.seed,
+        assignment_plan_hash=assignment_plan_hash,
+    )
 
     db.add(
         RunEnvironmentAssignmentDB(
@@ -532,6 +287,7 @@ def persist_run_assignments(
         "runtime_content_hash": runtime_content_hash,
         "agent_model": default_model_id,
         "agent_count": agent_count,
+        "population_specs": population_specs,
         "assignment_plan_hash": assignment_plan_hash,
         "assignment_map": assignment_map,
         "unique_model_ids": unique_model_ids,
@@ -541,45 +297,39 @@ def persist_run_assignments(
 def _build_run_init_payload(
     *,
     run_id: str,
-    policy_snapshot: Optional[Dict[str, Any]],
+    environment_id: Optional[str],
+    environment_params: Optional[Dict[str, Any]],
     assignment_snapshot: Dict[str, Any],
-    assignment_hash: Optional[str],
 ) -> Dict[str, Any]:
-    payload: Dict[str, Any] = {"run_id": run_id}
-    if not policy_snapshot:
-        return payload
-    payload.update(
-        {
-            "policy_json": policy_snapshot.get("policy_json"),
-            "policy_hash": policy_snapshot.get("policy_hash"),
-            "manifest_hash": policy_snapshot.get("manifest_hash"),
-            "assignment_hash": assignment_hash,
-            "assignment": {
-                "agent_count": assignment_snapshot.get("agent_count"),
-                "runtime_id": assignment_snapshot.get("runtime_id"),
-                "runtime_content_hash": assignment_snapshot.get("runtime_content_hash"),
-                "agent_model": assignment_snapshot.get("agent_model"),
-                "assignment_plan_hash": assignment_snapshot.get("assignment_plan_hash"),
-            },
-            "assignment_map": assignment_snapshot.get("assignment_map"),
-        }
-    )
-    return payload
+    return {
+        "run_id": run_id,
+        "environment_id": environment_id,
+        "params": dict(environment_params or {}),
+        "assignment": {
+            "agent_count": assignment_snapshot.get("agent_count"),
+            "runtime_id": assignment_snapshot.get("runtime_id"),
+            "runtime_content_hash": assignment_snapshot.get("runtime_content_hash"),
+            "agent_model": assignment_snapshot.get("agent_model"),
+            "assignment_plan_hash": assignment_snapshot.get("assignment_plan_hash"),
+            "population_specs": assignment_snapshot.get("population_specs"),
+        },
+        "assignment_map": assignment_snapshot.get("assignment_map"),
+    }
 
 
 async def init_environment_run_context(
     *,
     environment_url: str,
     run_id: str,
-    policy_snapshot: Optional[Dict[str, Any]],
+    environment_id: Optional[str],
+    environment_params: Optional[Dict[str, Any]],
     assignment_snapshot: Dict[str, Any],
-    assignment_hash: Optional[str],
 ) -> Dict[str, Any]:
     payload = _build_run_init_payload(
         run_id=run_id,
-        policy_snapshot=policy_snapshot,
+        environment_id=environment_id,
+        environment_params=environment_params,
         assignment_snapshot=assignment_snapshot,
-        assignment_hash=assignment_hash,
     )
     url = f"{environment_url}/run/init"
     try:
@@ -604,12 +354,6 @@ async def init_environment_run_context(
             "success": True,
             "status_code": response.status_code,
             "payload": body_json,
-            "accepted_policy_hash": str(
-                body_json.get("accepted_policy_hash")
-                or body_json.get("policy_hash")
-                or ""
-            ).strip()
-            or None,
         }
     except Exception as exc:
         return {

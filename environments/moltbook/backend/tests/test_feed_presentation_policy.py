@@ -58,7 +58,7 @@ from app.core.database import Base
 from app.models.agent import Agent
 from app.models.comment import Comment
 from app.models.post import Post
-from app.models.run_policy_state import RunPolicyState
+from app.models.run_context_state import RunContextState
 from app.models.submolt import Submolt
 from app.models.vote import Vote, VoteType
 
@@ -190,22 +190,28 @@ def _seed_post(db_session, *, upvotes: int, downvotes: int) -> Post:
     return post
 
 
-def _seed_hidden_policy(db_session, *, run_id: str = "run-hidden") -> None:
-    state = RunPolicyState(
+def _seed_run_params(db_session, *, run_id: str, params: dict) -> RunContextState:
+    state = RunContextState(
         run_id=run_id,
-        policy_json={
-            "env": {
-                "moltbook": {
-                    "feed": {
-                        "vote_visibility": "hidden",
-                        "hide_comment_counts": True,
-                    }
-                }
-            }
-        },
+        params_json=params,
     )
     db_session.add(state)
     db_session.commit()
+    db_session.refresh(state)
+    return state
+
+
+def _seed_hidden_policy(db_session, *, run_id: str = "run-hidden") -> None:
+    _seed_run_params(
+        db_session,
+        run_id=run_id,
+        params={
+            "feed": {
+                "vote_visibility": "hidden",
+                "hide_comment_counts": True,
+            }
+        },
+    )
 
 
 def test_feed_returns_hidden_vote_counts_when_policy_requests_it(api_client, db_session) -> None:
@@ -222,21 +228,16 @@ def test_feed_returns_hidden_vote_counts_when_policy_requests_it(api_client, db_
 
 def test_feed_keeps_real_vote_counts_for_frontend_when_policy_hides_only_for_agents(api_client, db_session) -> None:
     _seed_post(db_session, upvotes=7, downvotes=2)
-    state = RunPolicyState(
+    _seed_run_params(
+        db_session,
         run_id="run-agent-hidden",
-        policy_json={
-            "env": {
-                "moltbook": {
-                    "feed": {
-                        "vote_visibility": "agent_hidden",
-                        "hide_comment_counts": True,
-                    }
-                }
+        params={
+            "feed": {
+                "vote_visibility": "agent_hidden",
+                "hide_comment_counts": True,
             }
         },
     )
-    db_session.add(state)
-    db_session.commit()
 
     response = api_client.get("/feed?sort=new&limit=10", headers={"x-run-id": "run-agent-hidden"})
     assert response.status_code == 200
@@ -247,21 +248,16 @@ def test_feed_keeps_real_vote_counts_for_frontend_when_policy_hides_only_for_age
 
 def test_feed_hides_vote_counts_for_agent_context_when_policy_requests_agent_hidden(authenticated_api_client, db_session) -> None:
     _seed_post(db_session, upvotes=7, downvotes=2)
-    state = RunPolicyState(
+    _seed_run_params(
+        db_session,
         run_id="run-agent-hidden",
-        policy_json={
-            "env": {
-                "moltbook": {
-                    "feed": {
-                        "vote_visibility": "agent_hidden",
-                        "hide_comment_counts": True,
-                    }
-                }
+        params={
+            "feed": {
+                "vote_visibility": "agent_hidden",
+                "hide_comment_counts": True,
             }
         },
     )
-    db_session.add(state)
-    db_session.commit()
 
     response = authenticated_api_client.get(
         "/feed?sort=new&limit=10",
@@ -293,18 +289,14 @@ def test_duplicate_vote_does_not_toggle_when_one_vote_policy_is_enabled(
 ) -> None:
     post = _seed_post(db_session, upvotes=0, downvotes=0)
     _seed_hidden_policy(db_session, run_id="run-one-vote")
-    state = db_session.query(RunPolicyState).filter(RunPolicyState.run_id == "run-one-vote").first()
+    state = db_session.query(RunContextState).filter(RunContextState.run_id == "run-one-vote").first()
     assert state is not None
-    state.policy_json = {
-        "env": {
-            "moltbook": {
-                "feed": {
-                    "vote_visibility": "hidden",
-                    "hide_comment_counts": True,
-                    "one_vote_per_post": True,
-                    "hide_voted_posts_for_agent": True,
-                }
-            }
+    state.params_json = {
+        "feed": {
+            "vote_visibility": "hidden",
+            "hide_comment_counts": True,
+            "one_vote_per_post": True,
+            "hide_voted_posts_for_agent": True,
         }
     }
     db_session.add(state)
@@ -342,18 +334,14 @@ def test_feed_filters_already_voted_posts_for_agent(
 ) -> None:
     post = _seed_post(db_session, upvotes=0, downvotes=0)
     _seed_hidden_policy(db_session, run_id="run-filter")
-    state = db_session.query(RunPolicyState).filter(RunPolicyState.run_id == "run-filter").first()
+    state = db_session.query(RunContextState).filter(RunContextState.run_id == "run-filter").first()
     assert state is not None
-    state.policy_json = {
-        "env": {
-            "moltbook": {
-                "feed": {
-                    "vote_visibility": "hidden",
-                    "hide_comment_counts": True,
-                    "one_vote_per_post": True,
-                    "hide_voted_posts_for_agent": True,
-                }
-            }
+    state.params_json = {
+        "feed": {
+            "vote_visibility": "hidden",
+            "hide_comment_counts": True,
+            "one_vote_per_post": True,
+            "hide_voted_posts_for_agent": True,
         }
     }
     db_session.add(state)

@@ -34,7 +34,6 @@ Recommended fields:
 - `launch`
 - `runtime_defaults`
 - `backend_contract`
-- `policy`
 - `run_hooks`
 - `data_sources`
 - `analysis_exports`

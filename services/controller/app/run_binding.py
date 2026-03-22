@@ -72,7 +72,6 @@ def build_run_context(run: RunDB, db: Session) -> dict[str, Any]:
             "run_hooks": environment_config.get("run_hooks")
             if isinstance(environment_config.get("run_hooks"), list)
             else [],
-            "experiment_policy": _as_dict(environment_config.get("experiment_policy")),
             "runtime_controls": {
                 "heartbeat": environment_config.get("heartbeat"),
                 "max_parallel_agents": environment_config.get("max_parallel_agents"),

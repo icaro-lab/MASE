@@ -342,16 +342,6 @@ async def _load_environment_auth_registry_seed(
     }
 
 
-def _build_manifest_url(base_url: str) -> str:
-    """Resolve IA manifest endpoint from either root or prefixed IA base URL."""
-    normalized = (base_url or "").rstrip("/")
-    if normalized.endswith("/api/v1/inst-ai/manifest"):
-        return normalized
-    if normalized.endswith("/api/v1/inst-ai"):
-        return f"{normalized}/manifest"
-    return f"{normalized}/api/v1/inst-ai/manifest"
-
-
 def _build_platform_probe_actions(
     environment_url: str,
     *,

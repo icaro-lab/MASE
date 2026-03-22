@@ -23,6 +23,8 @@ def test_contract_lists_board_endpoints() -> None:
     endpoints = {(item["method"], item["path"]) for item in payload["endpoints"]}
     assert ("GET", "/api/v1/board") in endpoints
     assert ("POST", "/api/v1/board/notes") in endpoints
+    assert ("POST", "/run/init") in endpoints
+    assert ("POST", "/run/reset") in endpoints
 
 
 def test_register_and_add_note() -> None:
@@ -47,6 +49,14 @@ def test_register_and_add_note() -> None:
     assert board.status_code == 200
     assert any(note["author"] == "Chalk Bot 1" for note in board.json()["notes"])
 
+    duplicate = client.post(
+        "/api/v1/board/notes",
+        json={"text": "This second note should be rejected."},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"] == "Agent already posted a note"
+
 
 def test_batch_register_returns_tokens() -> None:
     response = client.post(
@@ -62,3 +72,28 @@ def test_batch_register_returns_tokens() -> None:
     payload = response.json()
     assert len(payload["results"]) == 2
     assert all(item["api_token"] for item in payload["results"])
+
+
+def test_run_init_is_idempotent() -> None:
+    first = client.post(
+        "/run/init",
+        json={
+            "run_id": "run-hello",
+            "environment_id": "hello-world",
+            "params": {"mood": "playful"},
+            "assignment_map": {"agent-1": {"role": "chalk-bot"}},
+        },
+    )
+    assert first.status_code == 200
+    assert first.json()["idempotent"] is False
+
+    second = client.post(
+        "/run/init",
+        json={
+            "run_id": "run-hello",
+            "environment_id": "hello-world",
+            "params": {"mood": "playful"},
+        },
+    )
+    assert second.status_code == 200
+    assert second.json()["idempotent"] is True

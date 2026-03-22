@@ -16,12 +16,10 @@ from app.config import settings
 from app.contract_validator import contract_validator
 from app.database import Run as RunDB
 from app.database import RunStatus as RunStatusEnum
-from app.experiment_policy import ExperimentPolicyError, compute_assignment_hash
 from app.models import RunCreate as LegacyRunCreate
 from app.heartbeat_contract import resolve_scheduler_heartbeat_timeout
 from app.run_bootstrap import (
     AgentInitSpec,
-    build_run_policy_snapshot,
     init_environment_run_context,
     load_environment_population_materializations,
     normalize_environment_config_for_run,
@@ -80,30 +78,15 @@ async def create_bound_run(
             ),
         )
 
-    (
-        normalized_env_config,
-        preview_metadata,
-        _compile_source,
-        compiled_snapshot_hash,
-    ) = normalize_environment_config_for_run(
+    normalized_env_config, _preview_metadata, _compile_source, _compiled_snapshot_hash = normalize_environment_config_for_run(
         environment_ref=environment_ref,
         environment_config=environment_config,
         db=db,
-    )
-    preview_block = (
-        normalized_env_config.get("experiment_policy_preview")
-        if isinstance(normalized_env_config.get("experiment_policy_preview"), dict)
-        else {}
     )
     environment_id = (
         run_binding.normalize_environment_ref(environment_ref)
         or str(((normalized_env_config.get("launch") or {}).get("environment_id")) or "").strip()
         or str(normalized_env_config.get("environment_id") or "").strip()
-    )
-    environment_content_hash = (
-        str((preview_metadata or {}).get("environment_content_hash") or "").strip()
-        or str(preview_block.get("environment_content_hash") or "").strip()
-        or None
     )
     resolved_bundle_hash = compute_resolved_bundle_hash(
         environment_ref=environment_ref,
@@ -169,93 +152,6 @@ async def create_bound_run(
             status_code=500,
             detail=f"Failed to persist run assignments: {assignment_error}",
         ) from assignment_error
-
-    try:
-        policy_snapshot = build_run_policy_snapshot(
-            environment_id=environment_id,
-            environment_content_hash=environment_content_hash,
-            environment_config=normalized_env_config,
-        )
-    except ExperimentPolicyError as policy_error:
-        db_run.status = RunStatusEnum.FAILED.value
-        db_run.ended_at = datetime.utcnow()
-        db_run.experiment_policy_state = "rejected"
-        emit_run_terminal_event(
-            db=db,
-            run=db_run,
-            terminal_status=RunStatusEnum.FAILED.value,
-            terminal_reason=f"Experiment policy validation failed: {policy_error}",
-            terminal_source="create_run_policy_validation",
-        )
-        db.commit()
-        raise HTTPException(
-            status_code=400,
-            detail=f"Experiment policy validation failed ({policy_error.code}): {policy_error}",
-        ) from policy_error
-
-    if preview_block and policy_snapshot:
-        mismatches: list[str] = []
-        expected_policy_hash = str(preview_block.get("policy_hash") or "").strip() or None
-        expected_manifest_hash = str(preview_block.get("manifest_hash") or "").strip() or None
-        expected_environment_hash = str(preview_block.get("environment_content_hash") or "").strip() or None
-        expected_compiled_snapshot_hash = (
-            str(
-                preview_block.get("compiled_snapshot_hash")
-                or preview_block.get("compiled_experiment_hash")
-                or ""
-            ).strip()
-            or None
-        )
-        actual_policy_hash = str(policy_snapshot.get("policy_hash") or "").strip() or None
-        actual_manifest_hash = str(policy_snapshot.get("manifest_hash") or "").strip() or None
-        if expected_policy_hash and actual_policy_hash and expected_policy_hash != actual_policy_hash:
-            mismatches.append("policy_hash")
-        if expected_manifest_hash and actual_manifest_hash and expected_manifest_hash != actual_manifest_hash:
-            mismatches.append("manifest_hash")
-        if expected_environment_hash and environment_content_hash and expected_environment_hash != environment_content_hash:
-            mismatches.append("environment_content_hash")
-        if (
-            expected_compiled_snapshot_hash
-            and compiled_snapshot_hash
-            and expected_compiled_snapshot_hash != compiled_snapshot_hash
-        ):
-            mismatches.append("compiled_snapshot_hash")
-
-        if mismatches:
-            db_run.status = RunStatusEnum.FAILED.value
-            db_run.ended_at = datetime.utcnow()
-            db_run.experiment_policy_state = "rejected"
-            emit_run_terminal_event(
-                db=db,
-                run=db_run,
-                    terminal_status=RunStatusEnum.FAILED.value,
-                terminal_reason=(
-                    "Experiment policy preview mismatch between preview and launch: "
-                    + ", ".join(sorted(set(mismatches)))
-                ),
-                terminal_source="create_run_policy_preview_mismatch",
-            )
-            db.commit()
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Experiment policy preview mismatch at launch; "
-                    "recreate or patch the environment config to refresh policy preview metadata."
-                ),
-            )
-
-    assignment_hash = compute_assignment_hash(
-        run_seed=request.seed,
-        assignment_snapshot=assignment_snapshot,
-        policy_hash=(policy_snapshot or {}).get("policy_hash"),
-        manifest_hash=(policy_snapshot or {}).get("manifest_hash"),
-    )
-    db_run.experiment_assignment_hash = assignment_hash
-    if policy_snapshot:
-        db_run.experiment_policy_json = policy_snapshot.get("policy_json")
-        db_run.experiment_policy_hash = policy_snapshot.get("policy_hash")
-        db_run.experiment_manifest_hash = policy_snapshot.get("manifest_hash")
-        db_run.experiment_policy_state = "validated"
     db.commit()
     db.refresh(db_run)
 
@@ -270,8 +166,6 @@ async def create_bound_run(
     async def mark_run_failed_and_stop(
         status_code: int,
         detail: str,
-        *,
-        policy_state: str | None = None,
     ) -> None:
         try:
             await asyncio.to_thread(
@@ -290,8 +184,6 @@ async def create_bound_run(
 
         db_run.status = RunStatusEnum.FAILED.value
         db_run.ended_at = datetime.utcnow()
-        if policy_state:
-            db_run.experiment_policy_state = policy_state
         emit_run_terminal_event(
             db=db,
             run=db_run,
@@ -390,74 +282,25 @@ async def create_bound_run(
             error_msg += f". Missing required endpoints: {', '.join(validation_result.missing_required_endpoints)}"
         await mark_run_failed_and_stop(status_code=400, detail=error_msg)
 
-    contract_payload: dict[str, Any] = {}
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            contract_response = await client.get(f"{environment_url}/contract")
-        if contract_response.status_code < 400:
-            parsed_contract = contract_response.json()
-            if isinstance(parsed_contract, dict):
-                contract_payload = parsed_contract
-    except Exception:
-        contract_payload = {}
-
-    if policy_snapshot:
-        required_capabilities = list(policy_snapshot.get("required_capabilities") or [])
-        contract_capabilities = {
-            str(item).strip()
-            for item in (contract_payload.get("capabilities") or [])
-            if str(item).strip()
-        }
-        missing_required_capabilities = sorted(set(required_capabilities) - contract_capabilities)
-        if missing_required_capabilities:
-            await mark_run_failed_and_stop(
-                status_code=400,
-                detail=(
-                    "Environment contract missing required experiment capabilities: "
-                    + ", ".join(missing_required_capabilities)
-                ),
-                policy_state="rejected",
-            )
-
     bootstrap_result = await init_environment_run_context(
         environment_url=environment_url,
         run_id=db_run.run_id,
-        policy_snapshot=policy_snapshot,
+        environment_id=environment_id,
+        environment_params=(
+            normalized_env_config.get("environment_params")
+            if isinstance(normalized_env_config.get("environment_params"), dict)
+            else {}
+        ),
         assignment_snapshot=assignment_snapshot,
-        assignment_hash=assignment_hash,
     )
-    requires_handoff = bool((policy_snapshot or {}).get("requires_handoff"))
     if not bootstrap_result.get("success"):
         bootstrap_error = str(bootstrap_result.get("error") or "unknown_error")
-        if requires_handoff:
-            await mark_run_failed_and_stop(
-                status_code=400,
-                detail=(
-                    "Environment rejected required policy handoff via /run/init: "
-                    f"{bootstrap_error}"
-                ),
-                policy_state="rejected",
-            )
         logger.warning(
             "create_run run_init_compatibility_fallback run_id=%s status_code=%s error=%s",
             db_run.run_id,
             bootstrap_result.get("status_code"),
             bootstrap_error,
         )
-    elif policy_snapshot:
-        accepted_policy_hash = str(bootstrap_result.get("accepted_policy_hash") or "").strip()
-        expected_policy_hash = str(policy_snapshot.get("policy_hash") or "").strip()
-        if accepted_policy_hash and expected_policy_hash and accepted_policy_hash != expected_policy_hash:
-            await mark_run_failed_and_stop(
-                status_code=409,
-                detail=(
-                    "Environment accepted a different policy hash during /run/init "
-                    f"(expected={expected_policy_hash}, received={accepted_policy_hash})"
-                ),
-                policy_state="rejected",
-            )
-        db_run.experiment_policy_state = "applied"
-        db.commit()
 
     await abort_if_run_cancelled("environment_bootstrap", stop_runtime=True)
 

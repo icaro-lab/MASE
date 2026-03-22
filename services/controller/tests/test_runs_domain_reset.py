@@ -10,7 +10,7 @@ from app.routes.runs import (
 )
 
 
-def test_build_environment_config_synthesizes_population_groups() -> None:
+def test_build_environment_config_resolves_population_specs() -> None:
     environment_manifest = {
         "id": "moltbook",
         "name": "Moltbook",
@@ -24,29 +24,6 @@ def test_build_environment_config_synthesizes_population_groups() -> None:
             "runtime_limit_minutes": 30,
             "max_parallel_agents": 50,
             "heartbeat": {"interval": "10s"},
-        },
-        "policy": {
-            "required_capabilities": ["experiment_policy_handoff", "population_mix"],
-            "core": {"require_policy_handoff": True},
-            "env": {
-                "moltbook": {
-                    "feed": {
-                        "hide_comment_counts": True,
-                        "one_vote_per_post": True,
-                    }
-                }
-            },
-            "conditions": {
-                "hidden-votes": {
-                    "env": {
-                        "moltbook": {
-                            "feed": {
-                                "vote_visibility": "agent_hidden",
-                            }
-                        }
-                    }
-                }
-            },
         },
         "run_hooks": [
             {
@@ -111,15 +88,8 @@ def test_build_environment_config_synthesizes_population_groups() -> None:
     assert voter_spec["count"] == 3
     assert critic_spec["runtime_id"] == "openclaw"
     assert critic_spec["count"] == 2
-
-    population_groups = env_config["experiment_policy"]["core"]["population_groups"]
-    required_capabilities = env_config["experiment_policy"]["core"]["required_capabilities"]
-    assert required_capabilities == ["experiment_policy_handoff", "population_mix"]
-    assert env_config["experiment_policy"]["core"]["require_policy_handoff"] is True
-    assert population_groups["voter"]["share"] == 3 / 5
-    assert population_groups["critic"]["share"] == 2 / 5
-    assert env_config["experiment_policy"]["env"]["moltbook"]["feed"]["hide_comment_counts"] is True
-    assert env_config["experiment_policy"]["env"]["moltbook"]["feed"]["vote_visibility"] == "agent_hidden"
+    assert snapshot["population_specs"]["voter"]["count"] == 3
+    assert snapshot["population_specs"]["critic"]["count"] == 2
     assert snapshot["launch"]["environment_id"] == "moltbook"
     assert snapshot["seed"] == 101
 
@@ -170,4 +140,3 @@ def test_build_environment_config_defaults_population_runtime_to_environment_run
 
     assert env_config["population_specs"]["resident"]["runtime_id"] == "openclaw"
     assert env_config["runtime_id"] == "openclaw"
-    assert "experiment_policy" not in env_config

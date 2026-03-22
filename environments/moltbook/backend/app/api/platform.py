@@ -32,7 +32,7 @@ from app.models.agent import Agent
 from app.models.comment import Comment
 from app.models.compass_submission import CompassSubmission
 from app.models.post import Post
-from app.models.run_policy_state import RunPolicyState
+from app.models.run_context_state import RunContextState
 from app.models.submolt import Submolt
 from app.models.subscription import Subscription
 
@@ -70,10 +70,7 @@ class UnregisterRequest(BaseModel):
 class RunInitRequest(BaseModel):
     run_id: str = Field(min_length=1, max_length=120)
     environment_id: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    policy_json: Optional[Dict[str, Any]] = Field(default=None)
-    policy_hash: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    manifest_hash: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    assignment_hash: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    params: Optional[Dict[str, Any]] = Field(default=None)
     assignment: Optional[Dict[str, Any]] = Field(default=None)
     assignment_map: Optional[Dict[str, Any]] = Field(default=None)
 
@@ -114,10 +111,6 @@ def compass_gate_enabled() -> bool:
 
 def _environment_name() -> str:
     return str(os.getenv("MOLTBOOK_ENVIRONMENT_NAME") or "moltbook").strip() or "moltbook"
-
-
-def _compass_policy_env_key() -> str:
-    return str(os.getenv("MOLTBOOK_REVIEW_POLICY_ENV_KEY") or "moltbook").strip() or "moltbook"
 
 
 def _compass_default_interval_minutes() -> int:
@@ -187,32 +180,17 @@ def _stable_jitter_seconds(run_id: str, agent_id: str, anchor_at: datetime, jitt
     return (int(digest[:8], 16) % spread) - jitter_seconds
 
 
-def _first_env_payload_for_key(policy_env: Dict[str, Any], key: str) -> Dict[str, Any]:
-    payload = policy_env.get(key)
-    if isinstance(payload, dict):
-        return payload
-    # Compatibility fallback for historical drafts where only one env key exists.
-    for _, candidate in policy_env.items():
-        if isinstance(candidate, dict):
-            return candidate
-    return {}
-
-
 def _load_compass_gate_policy(db: Session, run_id: str) -> Optional[Dict[str, Any]]:
     if not compass_gate_enabled():
         return None
 
-    run_state = db.query(RunPolicyState).filter(RunPolicyState.run_id == run_id).first()
+    run_state = db.query(RunContextState).filter(RunContextState.run_id == run_id).first()
     if run_state is None:
         return None
-    policy_json = run_state.policy_json if isinstance(run_state.policy_json, dict) else {}
-    env_block = policy_json.get("env") if isinstance(policy_json.get("env"), dict) else {}
-    env_payload = _first_env_payload_for_key(env_block, _compass_policy_env_key())
-    compass_payload = env_payload.get("compass") if isinstance(env_payload.get("compass"), dict) else None
-    if compass_payload is None:
-        legacy_payload = env_payload.get("compass_gate")
-        if isinstance(legacy_payload, dict):
-            compass_payload = legacy_payload
+    params_json = run_state.params_json if isinstance(run_state.params_json, dict) else {}
+    compass_payload = params_json.get("compass") if isinstance(params_json.get("compass"), dict) else None
+    if compass_payload is None and isinstance(params_json.get("compass_gate"), dict):
+        compass_payload = params_json.get("compass_gate")
     if compass_payload is None:
         return None
 
@@ -248,7 +226,6 @@ def _load_compass_gate_policy(db: Session, run_id: str) -> Optional[Dict[str, An
         "visibility_mode": visibility_mode,
         "refusal_policy": refusal_policy,
         "instrument_version": instrument_version,
-        "policy_env_key": _compass_policy_env_key(),
     }
 
 
@@ -903,7 +880,6 @@ def get_contract() -> Dict[str, Any]:
         "event_export",
         "state_snapshot",
         "metrics",
-        "experiment_policy_handoff",
         "population_mix",
     ]
     actions = [
@@ -1556,59 +1532,31 @@ def run_init(payload: RunInitRequest) -> Dict[str, Any]:
     db_gen = runtime_get_db()
     db = next(db_gen)
     try:
-        existing = db.query(RunPolicyState).filter(RunPolicyState.run_id == payload.run_id).first()
-        expected_policy_hash = str(payload.policy_hash or "").strip() or None
-        expected_manifest_hash = str(payload.manifest_hash or "").strip() or None
-        expected_assignment_hash = str(payload.assignment_hash or "").strip() or None
+        existing = db.query(RunContextState).filter(RunContextState.run_id == payload.run_id).first()
+        assignment_payload = payload.assignment_map
+        if assignment_payload is None and payload.assignment is not None:
+            assignment_payload = payload.assignment
         if existing:
-            conflicts = []
-            for field_name, current_value, expected_value in (
-                ("policy_hash", existing.policy_hash, expected_policy_hash),
-                ("manifest_hash", existing.manifest_hash, expected_manifest_hash),
-                ("assignment_hash", existing.assignment_hash, expected_assignment_hash),
-            ):
-                if current_value and expected_value and current_value != expected_value:
-                    conflicts.append((field_name, current_value, expected_value))
-            if conflicts:
-                detail = ", ".join(
-                    f"{field_name}: current={current} expected={expected}"
-                    for field_name, current, expected in conflicts
-                )
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"run policy handoff conflict for run_id={payload.run_id}: {detail}",
-                )
-            if expected_policy_hash:
-                existing.policy_hash = expected_policy_hash
-            if expected_manifest_hash:
-                existing.manifest_hash = expected_manifest_hash
-            if expected_assignment_hash:
-                existing.assignment_hash = expected_assignment_hash
             if payload.environment_id:
                 existing.environment_id = payload.environment_id
-            if payload.policy_json is not None:
-                existing.policy_json = payload.policy_json
-            if payload.assignment_map is not None:
-                existing.assignment_json = payload.assignment_map
+            if payload.params is not None:
+                existing.params_json = payload.params
+            if assignment_payload is not None:
+                existing.assignment_json = assignment_payload
             db.commit()
             db.refresh(existing)
             return {
                 "status": "ok",
                 "context": context,
-                "accepted_policy_hash": existing.policy_hash,
-                "manifest_hash": existing.manifest_hash,
-                "assignment_hash": existing.assignment_hash,
+                "environment_id": existing.environment_id,
                 "idempotent": True,
             }
 
-        state = RunPolicyState(
+        state = RunContextState(
             run_id=payload.run_id,
             environment_id=payload.environment_id,
-            policy_hash=expected_policy_hash,
-            manifest_hash=expected_manifest_hash,
-            assignment_hash=expected_assignment_hash,
-            policy_json=payload.policy_json,
-            assignment_json=payload.assignment_map,
+            params_json=payload.params,
+            assignment_json=assignment_payload,
         )
         db.add(state)
         db.commit()
@@ -1617,9 +1565,7 @@ def run_init(payload: RunInitRequest) -> Dict[str, Any]:
         return {
             "status": "ok",
             "context": context,
-            "accepted_policy_hash": state.policy_hash,
-            "manifest_hash": state.manifest_hash,
-            "assignment_hash": state.assignment_hash,
+            "environment_id": state.environment_id,
             "idempotent": False,
         }
     finally:

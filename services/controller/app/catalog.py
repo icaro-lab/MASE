@@ -505,8 +505,6 @@ def validate_environment(
                 errors.append("launch.frontend_service requires launch.images.frontend")
     if not isinstance(manifest.get("runtime_defaults") or {}, dict):
         warnings.append("runtime_defaults is missing or not a mapping")
-    if not isinstance(manifest.get("policy") or {}, dict):
-        warnings.append("policy is missing or not a mapping")
     if not isinstance(manifest.get("data_sources") or {}, dict):
         warnings.append("data_sources is missing or not a mapping")
 

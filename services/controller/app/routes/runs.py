@@ -70,29 +70,6 @@ class RunSnapshotResponse(BaseModel):
     snapshot: dict[str, Any] = Field(default_factory=dict)
 
 
-def _deep_merge_dicts(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
-    merged = copy.deepcopy(base)
-    for key, value in patch.items():
-        if isinstance(value, dict) and isinstance(merged.get(key), dict):
-            merged[key] = _deep_merge_dicts(merged[key], value)
-        else:
-            merged[key] = copy.deepcopy(value)
-    return merged
-
-
-def _merge_unique_strings(*raw_lists: Any) -> list[str]:
-    values: list[str] = []
-    for raw_list in raw_lists:
-        if not isinstance(raw_list, list):
-            continue
-        for item in raw_list:
-            text = str(item or "").strip()
-            if not text or text in values:
-                continue
-            values.append(text)
-    return values
-
-
 def _normalize_runtime_id(value: Any) -> str | None:
     runtime_id = str(value or "").strip()
     if not runtime_id:
@@ -125,10 +102,6 @@ def _normalize_run_binding(run: RunDB, db: Session) -> dict[str, Any]:
     params = env_config.get("environment_params") if isinstance(env_config.get("environment_params"), dict) else {}
     population_specs = env_config.get("population_specs") if isinstance(env_config.get("population_specs"), dict) else {}
     run_hooks = env_config.get("run_hooks") if isinstance(env_config.get("run_hooks"), list) else []
-    experiment_policy = (
-        env_config.get("experiment_policy") if isinstance(env_config.get("experiment_policy"), dict) else {}
-    )
-
     public_launch = _publicize_launch(launch_snapshot, context["environment_id"])
     public_population_specs = _publicize_population_specs(population_specs)
 
@@ -139,7 +112,6 @@ def _normalize_run_binding(run: RunDB, db: Session) -> dict[str, Any]:
         "params": params,
         "population_specs": public_population_specs,
         "run_hooks": run_hooks,
-        "experiment_policy": experiment_policy,
         "runtime_controls": {
             "heartbeat": env_config.get("heartbeat"),
             "max_parallel_agents": env_config.get("max_parallel_agents"),
@@ -266,48 +238,6 @@ def _build_environment_config(
 
     ordered_population_ids = sorted(population_specs.keys())
     default_population = population_specs[ordered_population_ids[0]]
-    population_groups = {
-        population_id: {
-            "share": spec["count"] / total_agents,
-            "runtime_id": spec["runtime_id"],
-            "model_id": spec["model_id"],
-            "role_label": spec["role_label"],
-        }
-        for population_id, spec in population_specs.items()
-    }
-
-    policy_manifest = environment_manifest.get("policy") if isinstance(environment_manifest.get("policy"), dict) else {}
-    condition_id = str((request.params or {}).get("condition") or "").strip()
-    condition_overrides = {}
-    if condition_id:
-        raw_conditions = policy_manifest.get("conditions")
-        if isinstance(raw_conditions, dict):
-            maybe_override = raw_conditions.get(condition_id)
-            if isinstance(maybe_override, dict):
-                condition_overrides = maybe_override
-
-    base_policy_core = policy_manifest.get("core") if isinstance(policy_manifest.get("core"), dict) else {}
-    override_policy_core = (
-        condition_overrides.get("core") if isinstance(condition_overrides.get("core"), dict) else {}
-    )
-    resolved_policy_core = _deep_merge_dicts(base_policy_core, override_policy_core)
-    required_capabilities = _merge_unique_strings(
-        policy_manifest.get("required_capabilities"),
-        condition_overrides.get("required_capabilities"),
-        resolved_policy_core.get("required_capabilities"),
-        ["population_mix"],
-    )
-    if required_capabilities:
-        resolved_policy_core["required_capabilities"] = required_capabilities
-    resolved_policy_core["population_groups"] = population_groups
-
-    base_policy_env = policy_manifest.get("env") if isinstance(policy_manifest.get("env"), dict) else {}
-    override_policy_env = (
-        condition_overrides.get("env") if isinstance(condition_overrides.get("env"), dict) else {}
-    )
-    resolved_policy_env = _deep_merge_dicts(base_policy_env, override_policy_env)
-    has_policy_controls = bool(policy_manifest) or bool(condition_overrides)
-
     runtime_defaults = (
         environment_manifest.get("runtime_defaults")
         if isinstance(environment_manifest.get("runtime_defaults"), dict)
@@ -331,13 +261,6 @@ def _build_environment_config(
         "pre_register_agents": bool(launch.get("pre_register_agents", True)),
         "run_hooks": normalized_run_hooks,
     }
-    if has_policy_controls:
-        env_config["experiment_policy"] = {
-            "policy_version": "1.0",
-            "core": resolved_policy_core,
-        }
-        if resolved_policy_env:
-            env_config["experiment_policy"]["env"] = resolved_policy_env
     for key in (
         "max_ticks",
         "max_heartbeats_per_agent",
@@ -368,8 +291,6 @@ def _build_environment_config(
         },
         "seed": request.seed,
     }
-    if "experiment_policy" in env_config:
-        snapshot["experiment_policy"] = env_config["experiment_policy"]
     return f"environment/{environment_id}", env_config, snapshot
 
 

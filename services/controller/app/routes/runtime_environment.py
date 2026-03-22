@@ -53,7 +53,6 @@ class EnvironmentManifestResponse(BaseModel):
     world_base: str | None = None
     params_schema: dict[str, Any] = Field(default_factory=dict)
     runtime_defaults: dict[str, Any] = Field(default_factory=dict)
-    policy: dict[str, Any] = Field(default_factory=dict)
     backend_contract: dict[str, Any] = Field(default_factory=dict)
     environment_skills: list[str] = Field(default_factory=list)
     populations: dict[str, PopulationResponse] = Field(default_factory=dict)

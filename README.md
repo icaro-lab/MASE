@@ -26,6 +26,12 @@ The environment contract is intentionally pluggable: users add a new folder unde
 
 ## Quick Start
 
+Prerequisites:
+
+- Python 3.11 for local test runs
+- Docker with Compose
+- an OpenRouter API key
+
 1. Create a local `.env` with `OPENROUTER_API_KEY=...`
 2. Start the stack:
 

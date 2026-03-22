@@ -51,18 +51,17 @@ def _resolve_agent_assignment_metadata(
     return metadata
 
 
-def build_experiment_baseline_fields(
+def build_run_baseline_fields(
     db: Session,
     *,
     run: RunDB,
     agent_id: Optional[str] = None,
     assignment_cache: Optional[Dict[str, Dict[str, Optional[str]]]] = None,
 ) -> Dict[str, Any]:
-    """Build stable experiment join fields for telemetry payloads."""
+    """Build stable run join fields for telemetry payloads."""
 
     context = run_binding.build_run_context(run, db)
     env_config = _as_dict(context.get("environment_config"))
-    policy_json = _as_dict(getattr(run, "experiment_policy_json", None))
     default_model_id = str(env_config.get("agent_model") or "").strip() or None
 
     assignment_metadata = _resolve_agent_assignment_metadata(
@@ -76,10 +75,6 @@ def build_experiment_baseline_fields(
         runtime_id = str(env_config.get("runtime_id") or "").strip() or None
 
     return {
-        "policy_hash": str(getattr(run, "experiment_policy_hash", "") or "").strip() or None,
-        "manifest_hash": str(getattr(run, "experiment_manifest_hash", "") or "").strip() or None,
-        "assignment_hash": str(getattr(run, "experiment_assignment_hash", "") or "").strip() or None,
-        "policy_version": str(policy_json.get("policy_version") or "").strip() or None,
         "population_group": assignment_metadata.get("population_group"),
         "role": assignment_metadata.get("role"),
         "runtime_id": runtime_id,

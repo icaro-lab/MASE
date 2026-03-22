@@ -41,7 +41,6 @@ class Capability(str, Enum):
     EVENT_EXPORT = "event_export"
     STATE_SNAPSHOT = "state_snapshot"
     METRICS = "metrics"
-    EXPERIMENT_POLICY_HANDOFF = "experiment_policy_handoff"
 
 
 class EnvironmentContract(BaseModel):

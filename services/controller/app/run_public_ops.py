@@ -42,7 +42,7 @@ from app.run_task_enforcement import (
     cancel_run_runtime_limit_task,
     emit_run_terminal_event,
 )
-from app.telemetry_baseline import build_experiment_baseline_fields
+from app.telemetry_baseline import build_run_baseline_fields
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ def build_run_cost_payload(run: RunDB, db: Session) -> Dict[str, Any]:
     run_id = run.run_id
     context = build_run_context(run, db)
     cost_limits = _extract_cost_limits(context.get("environment_config"))
-    baseline_fields = build_experiment_baseline_fields(
+    baseline_fields = build_run_baseline_fields(
         db,
         run=run,
         agent_id=None,
@@ -202,16 +202,12 @@ def build_run_cost_payload(run: RunDB, db: Session) -> Dict[str, Any]:
     return {
         "run_id": run_id,
         "status": run.status,
-        "policy_hash": baseline_fields.get("policy_hash"),
-        "manifest_hash": baseline_fields.get("manifest_hash"),
-        "assignment_hash": baseline_fields.get("assignment_hash"),
         "population_group": baseline_fields.get("population_group"),
         "role": baseline_fields.get("role"),
         "agent_runtime_id": resolved_runtime_id,
         "agent_runtime_ids": assignment_runtime_ids,
         "model_id": resolved_model_id,
         "model_ids": assignment_model_ids,
-        "policy_version": baseline_fields.get("policy_version"),
         "cost_limits": cost_limits,
         "totals": {
             "llm_cost_usd": total_llm_cost,

@@ -82,5 +82,5 @@ bash scripts/verify_platform.sh
 ## Design Rules
 
 - Keep the platform environment-generic.
-- Do not introduce new top-level simulation/version abstractions.
+- Do not introduce new top-level experiment abstraction layers beyond runtime, environment, and run.
 - If a concept is specific to one study, keep it inside that environment package.

@@ -98,8 +98,8 @@ describe('App routing', () => {
     expect(window.location.pathname).toBe('/runs/run-1/traces/trace-1');
   });
 
-  it('redirects removed shell routes to runs', async () => {
-    renderAt('/config');
+  it('redirects unknown shell routes to runs', async () => {
+    renderAt('/unknown-route');
     await waitFor(() => {
       expect(screen.getByText('runs-page')).toBeInTheDocument();
     });

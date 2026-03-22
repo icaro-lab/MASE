@@ -13,7 +13,7 @@ from sqlalchemy import func
 
 from app.database import Event as EventDB, Run, get_db
 from app.event_pipeline import RunEvent
-from app.telemetry_baseline import build_experiment_baseline_fields
+from app.telemetry_baseline import build_run_baseline_fields
 
 router = APIRouter(prefix="/api/v1/events", tags=["events"])
 
@@ -34,13 +34,10 @@ def _merge_event_baseline_fields(
     merged = dict(baseline_fields or {})
     raw_payload = payload if isinstance(payload, dict) else {}
     for key in (
-        "policy_hash",
-        "manifest_hash",
-        "assignment_hash",
         "population_group",
         "role",
+        "runtime_id",
         "model_id",
-        "policy_version",
     ):
         if merged.get(key) is None:
             merged[key] = raw_payload.get(key)
@@ -66,13 +63,10 @@ def _event_response(
         action_name=event.action_name,
         outcome=event.outcome,
         payload=event.payload,
-        policy_hash=merged_baseline.get("policy_hash"),
-        manifest_hash=merged_baseline.get("manifest_hash"),
-        assignment_hash=merged_baseline.get("assignment_hash"),
         population_group=merged_baseline.get("population_group"),
         role=merged_baseline.get("role"),
+        runtime_id=merged_baseline.get("runtime_id"),
         model_id=merged_baseline.get("model_id"),
-        policy_version=merged_baseline.get("policy_version"),
         trace_id=event.trace_id,
     )
 
@@ -94,13 +88,10 @@ class EventResponse(BaseModel):
     action_name: str = Field(..., description="Action performed")
     outcome: str = Field(..., description="Action outcome")
     payload: Optional[dict] = Field(None, description="Event data")
-    policy_hash: Optional[str] = Field(None, description="Pinned experiment policy hash for run/event join.")
-    manifest_hash: Optional[str] = Field(None, description="Pinned environment manifest hash for run/event join.")
-    assignment_hash: Optional[str] = Field(None, description="Pinned assignment hash for deterministic joins.")
     population_group: Optional[str] = Field(None, description="Agent population group label when available.")
     role: Optional[str] = Field(None, description="Agent role label when available.")
+    runtime_id: Optional[str] = Field(None, description="Resolved runtime id for this event context.")
     model_id: Optional[str] = Field(None, description="Resolved model id for this event context.")
-    policy_version: Optional[str] = Field(None, description="Experiment policy version when available.")
     trace_id: Optional[str] = Field(None, description="Distributed trace ID")
 
     class Config:
@@ -195,7 +186,7 @@ async def get_run_events(
         events=[
             _event_response(
                 event,
-                baseline_fields=build_experiment_baseline_fields(
+                baseline_fields=build_run_baseline_fields(
                     db,
                     run=run,
                     agent_id=event.agent_id,
@@ -287,7 +278,7 @@ async def export_events(request: EventExportRequest, db: Session = Depends(get_d
         result[run_id] = [
             _event_response(
                 event,
-                baseline_fields=build_experiment_baseline_fields(
+                baseline_fields=build_run_baseline_fields(
                     db,
                     run=run,
                     agent_id=event.agent_id,
@@ -318,7 +309,7 @@ async def ingest_event(run_id: str, event: RunEvent, db: Session = Depends(get_d
     if not run:
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
 
-    baseline_fields = build_experiment_baseline_fields(
+    baseline_fields = build_run_baseline_fields(
         db,
         run=run,
         agent_id=event.agent_id,

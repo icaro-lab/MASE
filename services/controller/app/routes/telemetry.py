@@ -28,7 +28,7 @@ from app.database import (
 )
 from app.redis_client import get_agent_channel, get_run_channel, redis_client
 from app.run_launcher import run_launcher
-from app.telemetry_baseline import build_experiment_baseline_fields
+from app.telemetry_baseline import build_run_baseline_fields
 
 
 logger = logging.getLogger(__name__)
@@ -365,7 +365,7 @@ async def _enforce_cost_limits_for_runs(db: Session, run_ids: Set[str]) -> None:
             },
         }
         breach_payload.update(
-            build_experiment_baseline_fields(
+            build_run_baseline_fields(
                 db,
                 run=run,
                 agent_id=None,
@@ -427,7 +427,7 @@ async def persist_batch_events(
                 continue
 
             assignment_cache = assignment_cache_by_run.setdefault(event.run_id, {})
-            baseline_fields = build_experiment_baseline_fields(
+            baseline_fields = build_run_baseline_fields(
                 db,
                 run=run,
                 agent_id=event.agent_id,

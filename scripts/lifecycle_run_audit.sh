@@ -73,7 +73,7 @@ count_running_agent_like_containers_for_run() {
   names="$(
     docker ps --format '{{.Names}}' \
       | grep "$RUN_ID" \
-      | grep -E 'agent|inst-ai|institutional' \
+      | grep -E 'agent' \
       || true
   )"
   if [ -z "$names" ]; then
@@ -184,7 +184,7 @@ if [ "$running_containers_after_stop" -ne 0 ]; then
 fi
 if [ "$agent_like_running_after_stop" -ne 0 ]; then
   failures=$((failures + 1))
-  notes+=("expected zero agent/institutional containers after stop, found $agent_like_running_after_stop")
+  notes+=("expected zero agent containers after stop, found $agent_like_running_after_stop")
 fi
 if [ "$environment_like_running_after_stop" -ne 0 ]; then
   failures=$((failures + 1))

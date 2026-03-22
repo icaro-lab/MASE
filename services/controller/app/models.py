@@ -75,22 +75,6 @@ class Run(RunBase):
         default=None,
         description="List of initialized agent IDs.",
     )
-    experiment_policy_hash: Optional[str] = Field(
-        default=None,
-        description="Canonical policy hash pinned to this run.",
-    )
-    experiment_manifest_hash: Optional[str] = Field(
-        default=None,
-        description="Pinned environment manifest hash used for policy validation.",
-    )
-    experiment_assignment_hash: Optional[str] = Field(
-        default=None,
-        description="Deterministic assignment hash for role/model mapping.",
-    )
-    experiment_policy_state: Optional[str] = Field(
-        default=None,
-        description="Policy lifecycle state: validated | applied | rejected.",
-    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -106,10 +90,6 @@ class Run(RunBase):
                 "runtime_limit_minutes": 5,
                 "agent_count": 10,
                 "initialized_agents": ["agent-1", "agent-2"],
-                "experiment_policy_hash": "sha256:aabbcc...",
-                "experiment_manifest_hash": "sha256:ddeeff...",
-                "experiment_assignment_hash": "sha256:112233...",
-                "experiment_policy_state": "applied",
             }
         }
     )

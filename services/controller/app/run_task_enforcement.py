@@ -34,7 +34,7 @@ from app.run_read_model import (
     as_utc_datetime,
     resolve_run_service_urls,
 )
-from app.telemetry_baseline import build_experiment_baseline_fields
+from app.telemetry_baseline import build_run_baseline_fields
 
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ def emit_run_terminal_event(
     if isinstance(extra_payload, dict):
         payload.update(extra_payload)
     payload.update(
-        build_experiment_baseline_fields(
+        build_run_baseline_fields(
             db,
             run=run,
             agent_id=None,
@@ -166,7 +166,7 @@ def _emit_run_timeout_event(
         "enforced_at": _to_utc_iso(datetime.utcnow()),
         "enforcement_source": enforcement_source,
     }
-    payload.update(build_experiment_baseline_fields(db, run=run, agent_id=None))
+    payload.update(build_run_baseline_fields(db, run=run, agent_id=None))
     db.add(
         EventDB(
             run_id=run.run_id,
@@ -198,7 +198,7 @@ def _emit_run_max_ticks_event(
         "enforced_at": _to_utc_iso(datetime.utcnow()),
         "enforcement_source": enforcement_source,
     }
-    payload.update(build_experiment_baseline_fields(db, run=run, agent_id=None))
+    payload.update(build_run_baseline_fields(db, run=run, agent_id=None))
     db.add(
         EventDB(
             run_id=run.run_id,
@@ -232,7 +232,7 @@ def _emit_run_max_agent_heartbeats_event(
         "enforced_at": _to_utc_iso(datetime.utcnow()),
         "enforcement_source": enforcement_source,
     }
-    payload.update(build_experiment_baseline_fields(db, run=run, agent_id=None))
+    payload.update(build_run_baseline_fields(db, run=run, agent_id=None))
     db.add(
         EventDB(
             run_id=run.run_id,

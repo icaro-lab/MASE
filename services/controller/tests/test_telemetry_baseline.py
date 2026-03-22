@@ -6,7 +6,7 @@ import types
 
 import pytest
 
-from app.telemetry_baseline import build_experiment_baseline_fields
+from app.telemetry_baseline import build_run_baseline_fields
 
 
 class _NoQueryResult:
@@ -31,16 +31,10 @@ class _NoQuerySession:
 
 
 @pytest.mark.unit
-def test_build_experiment_baseline_fields_from_assignment_cache() -> None:
-    run = types.SimpleNamespace(
-        run_id="run-1",
-        experiment_policy_hash="sha256:policy",
-        experiment_manifest_hash="sha256:manifest",
-        experiment_assignment_hash="sha256:assignment",
-        experiment_policy_json={"policy_version": "1.0"},
-    )
+def test_build_run_baseline_fields_from_assignment_cache() -> None:
+    run = types.SimpleNamespace(run_id="run-1")
 
-    fields = build_experiment_baseline_fields(
+    fields = build_run_baseline_fields(
         _NoQuerySession(),
         run=run,
         agent_id="agent-3",
@@ -54,10 +48,6 @@ def test_build_experiment_baseline_fields_from_assignment_cache() -> None:
         },
     )
 
-    assert fields["policy_hash"] == "sha256:policy"
-    assert fields["manifest_hash"] == "sha256:manifest"
-    assert fields["assignment_hash"] == "sha256:assignment"
-    assert fields["policy_version"] == "1.0"
     assert fields["population_group"] == "treated"
     assert fields["role"] == "disinfo_actor"
     assert fields["runtime_id"] == "openclaw-disinfo"
@@ -65,14 +55,8 @@ def test_build_experiment_baseline_fields_from_assignment_cache() -> None:
 
 
 @pytest.mark.unit
-def test_build_experiment_baseline_fields_defaults_when_no_agent_override(monkeypatch) -> None:
-    run = types.SimpleNamespace(
-        run_id="run-2",
-        experiment_policy_hash=None,
-        experiment_manifest_hash=None,
-        experiment_assignment_hash=None,
-        experiment_policy_json={},
-    )
+def test_build_run_baseline_fields_defaults_when_no_agent_override(monkeypatch) -> None:
+    run = types.SimpleNamespace(run_id="run-2")
 
     monkeypatch.setattr(
         "app.telemetry_baseline.run_binding.build_run_context",
@@ -84,16 +68,12 @@ def test_build_experiment_baseline_fields_defaults_when_no_agent_override(monkey
         },
     )
 
-    fields = build_experiment_baseline_fields(
+    fields = build_run_baseline_fields(
         _NoQuerySession(),
         run=run,
         agent_id=None,
     )
 
-    assert fields["policy_hash"] is None
-    assert fields["manifest_hash"] is None
-    assert fields["assignment_hash"] is None
-    assert fields["policy_version"] is None
     assert fields["population_group"] is None
     assert fields["role"] is None
     assert fields["runtime_id"] == "openclaw"
@@ -101,14 +81,8 @@ def test_build_experiment_baseline_fields_defaults_when_no_agent_override(monkey
 
 
 @pytest.mark.unit
-def test_build_experiment_baseline_fields_reads_agent_assignment_row_when_cache_missing(monkeypatch) -> None:
-    run = types.SimpleNamespace(
-        run_id="run-2b",
-        experiment_policy_hash="sha256:policy",
-        experiment_manifest_hash="sha256:manifest",
-        experiment_assignment_hash="sha256:assignment",
-        experiment_policy_json={"policy_version": "1.0"},
-    )
+def test_build_run_baseline_fields_reads_agent_assignment_row_when_cache_missing(monkeypatch) -> None:
+    run = types.SimpleNamespace(run_id="run-2b")
 
     monkeypatch.setattr(
         "app.telemetry_baseline.run_binding.build_run_context",
@@ -120,7 +94,7 @@ def test_build_experiment_baseline_fields_reads_agent_assignment_row_when_cache_
         },
     )
 
-    fields = build_experiment_baseline_fields(
+    fields = build_run_baseline_fields(
         _NoQuerySession(
             agent_assignment=types.SimpleNamespace(
                 runtime_id="openclaw-treated",

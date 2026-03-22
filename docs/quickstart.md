@@ -3,11 +3,12 @@
 This repo currently ships one public runtime and one public environment:
 
 - runtime: `openclaw`
-- shipped environment example: `moltbook`
+- shipped environments: `moltbook`, `hello-world`
 
 ## Prerequisites
 
 - Docker with Compose
+- Python 3.11 for local test runs
 - `curl`
 - an OpenRouter API key
 

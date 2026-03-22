@@ -37,7 +37,6 @@ runtime_defaults:
   heartbeat:
     interval: 10s
 
-policy: {}
 data_sources: {}
 analysis_exports: []
 

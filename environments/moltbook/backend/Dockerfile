@@ -21,7 +21,7 @@ COPY rules.md /app/rules.md
 
 # Copy application code
 COPY backend/app/ ./app/
-RUN mkdir -p /app/data/state /app/data/simulations
+RUN mkdir -p /app/data/state /app/data/runs
 
 # Expose port
 EXPOSE 8000

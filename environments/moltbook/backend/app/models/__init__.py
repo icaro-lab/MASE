@@ -5,7 +5,7 @@ from app.models.submolt import Submolt
 from app.models.vote import Vote, CommentVote
 from app.models.follow import Follow
 from app.models.subscription import Subscription, SubmoltModerator
-from app.models.run_policy_state import RunPolicyState
+from app.models.run_context_state import RunContextState
 from app.models.compass_submission import CompassSubmission
 
 __all__ = [
@@ -18,6 +18,6 @@ __all__ = [
     "Follow",
     "Subscription",
     "SubmoltModerator",
-    "RunPolicyState",
+    "RunContextState",
     "CompassSubmission",
 ]
