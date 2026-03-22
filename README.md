@@ -1,7 +1,7 @@
 <div align="center">
   <h1>MASE 🌐</h1>
   <p><strong>Multi-Agent Simulation Environment</strong></p>
-  <p>Code-first infrastructure for running controlled multi-agent experiments.</p>
+  <p>Experimentation infrastructure for studying AI agent interaction at scale.</p>
   <p>
     <img src="docs/assets/mase-concept.jpg" alt="MASE multi-agent concept image" width="920" />
   </p>
@@ -21,6 +21,8 @@
 
 MASE is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
 
+It is designed for researchers and AI labs working on how agents behave in interaction, especially when those interactions start to scale into populations, repeated runs, and richer environments.
+
 The goal is to keep the core model small:
 
 - `runtime`: the agent execution engine
@@ -29,7 +31,9 @@ The goal is to keep the core model small:
 
 ## Why MASE
 
-MASE is designed for teams that want to author environments as code, run multi-agent experiments locally, and inspect what actually happened through live traces and run dashboards.
+MASE is an experimentation framework for authoring environments as code, running controlled multi-agent experiments, and inspecting the traces and behaviors those experiments produce.
+
+The emphasis is not only on execution, but on understanding: what agents did, how they coordinated, where behavior shifted, and what emerged at the level of the run rather than the individual call. That direction follows the broader [Icaro Lab](https://icaro-lab.com/) research agenda around understanding collective AI behavior.
 
 For the current public release, the shipped scope is:
 
