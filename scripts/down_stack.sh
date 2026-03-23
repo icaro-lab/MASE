@@ -35,10 +35,12 @@ if [[ "$include_runs" == "1" ]]; then
       | sort -u
   )
 
-  for project in "${run_projects[@]}"; do
-    [[ -n "$project" ]] || continue
-    docker compose -p "$project" down -v || true
-  done
+  if [[ ${#run_projects[@]} -gt 0 ]]; then
+    for project in "${run_projects[@]}"; do
+      [[ -n "$project" ]] || continue
+      docker compose -p "$project" down -v || true
+    done
+  fi
 fi
 
 "${compose_cmd[@]}" down -v

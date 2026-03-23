@@ -36,7 +36,7 @@ fi
 wait_for_postgres() {
   local attempt
 
-  for attempt in $(seq 1 60); do
+  for attempt in $(seq 1 90); do
     if "${compose_cmd[@]}" exec -T postgres pg_isready -U "${POSTGRES_USER:-mase}" >/dev/null 2>&1; then
       return 0
     fi
@@ -47,16 +47,47 @@ wait_for_postgres() {
   return 1
 }
 
+wait_for_postgres_sql() {
+  local attempt
+
+  for attempt in $(seq 1 90); do
+    if "${compose_cmd[@]}" exec -T postgres psql \
+      -U "${POSTGRES_USER:-mase}" \
+      -d postgres \
+      -tAc "SELECT 1" 2>/dev/null | grep -q '^1$'; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "Timed out waiting for postgres SQL readiness" >&2
+  return 1
+}
+
+database_exists() {
+  local database="$1"
+
+  "${compose_cmd[@]}" exec -T postgres psql \
+    -U "${POSTGRES_USER:-mase}" \
+    -d postgres \
+    -tAc "SELECT 1 FROM pg_database WHERE datname = '${database}'" 2>/dev/null | grep -q '^1$'
+}
+
 ensure_platform_databases() {
   local database
   local attempt
 
   for database in mase_admin mase_runs; do
-    for attempt in $(seq 1 30); do
-      if "${compose_cmd[@]}" exec -T postgres psql \
+    for attempt in $(seq 1 60); do
+      if ! "${compose_cmd[@]}" exec -T postgres psql \
         -U "${POSTGRES_USER:-mase}" \
         -d postgres \
-        -tAc "SELECT 1 FROM pg_database WHERE datname = '${database}'" | grep -q '^1$'; then
+        -tAc "SELECT 1" >/dev/null 2>&1; then
+        sleep 1
+        continue
+      fi
+
+      if database_exists "$database"; then
         break
       fi
 
@@ -69,10 +100,7 @@ ensure_platform_databases() {
       sleep 1
     done
 
-    if ! "${compose_cmd[@]}" exec -T postgres psql \
-      -U "${POSTGRES_USER:-mase}" \
-      -d postgres \
-      -tAc "SELECT 1 FROM pg_database WHERE datname = '${database}'" | grep -q '^1$'; then
+    if ! database_exists "$database"; then
       echo "Timed out ensuring database ${database} exists" >&2
       return 1
     fi
@@ -81,6 +109,7 @@ ensure_platform_databases() {
 
 "${compose_cmd[@]}" up -d postgres redis
 wait_for_postgres
+wait_for_postgres_sql
 ensure_platform_databases
 "${compose_cmd[@]}" up -d --build orchestrator controller agent-launcher admin-backend admin-frontend
 
