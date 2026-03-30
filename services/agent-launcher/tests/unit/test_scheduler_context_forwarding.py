@@ -48,7 +48,7 @@ if "apscheduler.schedulers.asyncio" not in sys.modules:
     sys.modules["apscheduler.triggers.date"] = apscheduler_date_module
 
 from app import scheduler as scheduler_module
-from app.scheduler import HeartbeatScheduler
+from app.scheduler import AgentState, HeartbeatScheduler
 
 
 class _FakeResponse:
@@ -473,3 +473,27 @@ def test_scheduler_progress_summarizes_agent_state() -> None:
         "total_agents": 3,
         "all_agents_terminal": False,
     }
+
+
+@pytest.mark.unit
+def test_update_agent_state_isolated_by_run_id() -> None:
+    scheduler = HeartbeatScheduler()
+    scheduler.initialize(interval="5s", timeout="2s")
+    scheduler._agent_states = {
+        "run-a/agent-1": AgentState(agent_id="agent-1", run_id="run-a", heartbeat_index=0, status="running"),
+        "run-b/agent-1": AgentState(agent_id="agent-1", run_id="run-b", heartbeat_index=0, status="running"),
+    }
+
+    scheduler._update_agent_state(
+        scheduler_module.HeartbeatResult(
+            agent_id="agent-1",
+            run_id="run-b",
+            success=True,
+            actions_executed=2,
+        )
+    )
+
+    assert scheduler._agent_states["run-a/agent-1"].status == "running"
+    assert scheduler._agent_states["run-a/agent-1"].total_actions == 0
+    assert scheduler._agent_states["run-b/agent-1"].status == "active"
+    assert scheduler._agent_states["run-b/agent-1"].total_actions == 2

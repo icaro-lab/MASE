@@ -79,6 +79,7 @@ class HeartbeatResult:
     """Result of a heartbeat operation."""
     agent_id: str
     success: bool
+    run_id: str = ""
     actions_executed: int = 0
     error: Optional[str] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
@@ -624,6 +625,7 @@ class HeartbeatScheduler:
             if self._state != SchedulerState.RUNNING:
                 return HeartbeatResult(
                     agent_id=agent_id,
+                    run_id=run_id,
                     success=True,
                     actions_executed=0,
                     metadata={"skipped": "scheduler_not_running"},
@@ -647,6 +649,7 @@ class HeartbeatScheduler:
                 if self._state != SchedulerState.RUNNING:
                     return HeartbeatResult(
                         agent_id=agent_id,
+                        run_id=run_id,
                         success=True,
                         actions_executed=0,
                         metadata={"skipped": "scheduler_not_running"},
@@ -658,6 +661,7 @@ class HeartbeatScheduler:
                         if self._state != SchedulerState.RUNNING:
                             result = HeartbeatResult(
                                 agent_id=agent_id,
+                                run_id=run_id,
                                 success=True,
                                 actions_executed=0,
                                 metadata={"skipped": "scheduler_not_running"},
@@ -676,6 +680,7 @@ class HeartbeatScheduler:
                         except asyncio.CancelledError:
                             result = HeartbeatResult(
                                 agent_id=agent_id,
+                                run_id=run_id,
                                 success=True,
                                 actions_executed=0,
                                 metadata={"skipped": "cancelled"},
@@ -697,6 +702,7 @@ class HeartbeatScheduler:
 
                                 result = HeartbeatResult(
                                     agent_id=agent_id,
+                                    run_id=run_id,
                                     success=False,
                                     error=error_msg
                                 )
@@ -715,6 +721,7 @@ class HeartbeatScheduler:
         except asyncio.CancelledError:
             return HeartbeatResult(
                 agent_id=agent_id,
+                run_id=run_id,
                 success=True,
                 actions_executed=0,
                 metadata={"skipped": "cancelled"},
@@ -793,6 +800,7 @@ class HeartbeatScheduler:
 
             return HeartbeatResult(
                 agent_id=agent_id,
+                run_id=run_id,
                 # Paused/skipped are intentional control states, not failures.
                 success=heartbeat_status in {"completed", "paused", "skipped"},
                 actions_executed=data.get("actions_executed", 0),
@@ -1043,21 +1051,29 @@ class HeartbeatScheduler:
     
     def _update_agent_state(self, result: HeartbeatResult):
         """Update agent state based on heartbeat result."""
-        # Find agent state by agent_id
-        for state in self._agent_states.values():
-            if state.agent_id == result.agent_id:
-                if result.success:
-                    state.status = "active"
-                    state.consecutive_failures = 0
-                    state.total_actions += result.actions_executed
-                else:
-                    state.consecutive_failures += 1
-                    state.last_error = result.error
-                    if state.consecutive_failures >= 3:
-                        state.status = "failed"
-                
-                state.last_heartbeat = result.timestamp
-                break
+        state: Optional[AgentState] = None
+        if result.run_id:
+            state = self._agent_states.get(f"{result.run_id}/{result.agent_id}")
+
+        # Backward-compatible fallback for older call sites/tests that omit run_id.
+        if state is None:
+            for candidate in self._agent_states.values():
+                if candidate.agent_id == result.agent_id:
+                    state = candidate
+                    break
+
+        if state is not None:
+            if result.success:
+                state.status = "active"
+                state.consecutive_failures = 0
+                state.total_actions += result.actions_executed
+            else:
+                state.consecutive_failures += 1
+                state.last_error = result.error
+                if state.consecutive_failures >= 3:
+                    state.status = "failed"
+
+            state.last_heartbeat = result.timestamp
         self._maybe_stop_when_all_agents_terminal()
     
     def _parse_interval(self, interval_str: str) -> float:
