@@ -176,6 +176,11 @@ This repo now includes:
 - [SECURITY.md](SECURITY.md)
 - GitHub CI under `.github/workflows/ci.yml`
 
+Contribution flow:
+
+- `main` stays stable
+- contributions should branch from `dev` and open PRs back into `dev`
+
 ## Repository Shape
 
 ```text
