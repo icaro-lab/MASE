@@ -35,6 +35,16 @@ Useful API endpoints:
 - `GET /api/v1/runs/{run_id}/events`
 - `GET /api/v1/runs/{run_id}/metrics`
 - `GET /api/v1/runs/{run_id}/scheduler/status`
+- `GET /api/v1/telemetry/events/{run_id}`
+- `GET /api/v1/telemetry/metrics/{run_id}`
+
+`action_attempt` telemetry rows now persist two response surfaces for HTTP actions:
+
+- `response_preview`: short redacted string preview
+- `response_snapshot`: bounded structured JSON snapshot for JSON-like bodies
+
+The snapshot is generic and size-limited. Environments can later derive domain-specific analyses
+from it without requiring raw full-body dumps in telemetry.
 
 ## Operate
 

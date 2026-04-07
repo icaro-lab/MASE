@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     # Execution Limits
     max_actions_per_heartbeat: int = 10
     http_timeout: int = 30
+    http_response_snapshot_enabled: bool = True
+    http_response_snapshot_max_depth: int = 4
+    http_response_snapshot_max_dict_keys: int = 24
+    http_response_snapshot_max_list_items: int = 64
+    http_response_snapshot_max_string_chars: int = 120
+    http_response_snapshot_max_total_nodes: int = 2048
     
     # Service Configuration
     environment_url: Optional[str] = None

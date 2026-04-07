@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from .action_parser import Action, ActionType, HTTPMethod
 from .agent_fs import AgentFilesystem
 from .config import settings
+from .http_snapshot import build_response_snapshot
 from .telemetry_client import ActionCategory, record_action
 from .scheduler import heartbeat_scheduler
 
@@ -1138,6 +1139,8 @@ class ActionExecutor:
 
             response_preview = None
             response_body_chars = None
+            response_snapshot = None
+            response_snapshot_meta = None
             response_payload = result.get("response")
             if isinstance(response_payload, dict):
                 body = response_payload.get("body")
@@ -1150,6 +1153,15 @@ class ActionExecutor:
                     response_body_chars = len(response_preview)
                     if len(response_preview) > 700:
                         response_preview = f"{response_preview[:697]}..."
+                    response_snapshot, response_snapshot_meta = build_response_snapshot(
+                        body,
+                        enabled=settings.http_response_snapshot_enabled,
+                        max_depth=settings.http_response_snapshot_max_depth,
+                        max_dict_keys=settings.http_response_snapshot_max_dict_keys,
+                        max_list_items=settings.http_response_snapshot_max_list_items,
+                        max_string_chars=settings.http_response_snapshot_max_string_chars,
+                        max_total_nodes=settings.http_response_snapshot_max_total_nodes,
+                    )
 
             action_url = None
             if hasattr(action, "url"):
@@ -1174,6 +1186,8 @@ class ActionExecutor:
                 "error_code": error_code if not success else None,
                 "response_preview": response_preview,
                 "response_body_chars": response_body_chars,
+                "response_snapshot": response_snapshot,
+                "response_snapshot_meta": response_snapshot_meta,
             }
 
             await record_action(

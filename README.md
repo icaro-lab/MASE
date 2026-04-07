@@ -147,6 +147,7 @@ Public-facing docs for the extractable OSS surface now live under `docs/`:
 - [`docs/concepts.md`](docs/concepts.md)
 - [`docs/quickstart.md`](docs/quickstart.md)
 - [`docs/openrouter.md`](docs/openrouter.md)
+- [`docs/telemetry.md`](docs/telemetry.md)
 - [`docs/runtime-contract.md`](docs/runtime-contract.md)
 - [`docs/environment-contract.md`](docs/environment-contract.md)
 - [`docs/create-environment.md`](docs/create-environment.md)
