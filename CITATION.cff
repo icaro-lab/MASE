@@ -19,3 +19,14 @@ keywords:
   - "simulation"
   - "AI agents"
   - "research infrastructure"
+preferred-citation:
+  type: software
+  authors:
+    - family-names: "Prandi"
+      given-names: "Matteo"
+      affiliation: "Icaro Lab"
+      orcid: "https://orcid.org/0009-0002-9258-5589"
+  title: "MASE: Multi-Agent Simulation Environment"
+  version: "v0.1.0"
+  doi: "10.5281/zenodo.19485472"
+  url: "https://doi.org/10.5281/zenodo.19485472"
