@@ -8,6 +8,7 @@
   <p>
     <a href="https://github.com/icaro-lab/MASE/actions/workflows/ci.yml"><img src="https://github.com/icaro-lab/MASE/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/icaro-lab/MASE" alt="License"></a>
+    <a href="https://doi.org/10.5281/zenodo.19485472"><img src="https://zenodo.org/badge/1188871480.svg" alt="DOI"></a>
     <a href="#next-steps"><img src="https://img.shields.io/badge/status-alpha-8a6d3b" alt="Status"></a>
   </p>
   <p>
@@ -165,34 +166,35 @@ If you use MASE in research:
 - cite the specific software release you used
 - if you used unreleased code, cite the repository together with the commit hash
 
-Until the first DOI-backed release is published, the repo itself can be cited as
-software:
+The current DOI-backed software release is:
+
+- `v0.1.0`
+- DOI: [`10.5281/zenodo.19485472`](https://doi.org/10.5281/zenodo.19485472)
+
+Preferred citation for the first archived release:
 
 ```bibtex
-@software{prandi_mase,
+@software{prandi_mase_v010,
   author = {Prandi, Matteo},
   title = {MASE: Multi-Agent Simulation Environment},
+  version = {v0.1.0},
   year = {2026},
-  institution = {Icaro Lab},
-  url = {https://github.com/icaro-lab/MASE},
-  note = {GitHub repository}
+  doi = {10.5281/zenodo.19485472},
+  url = {https://doi.org/10.5281/zenodo.19485472}
 }
 ```
 
-After the first Zenodo-backed release, prefer citing the archived release DOI
-instead of the repository URL.
+For unreleased work on top of `main` or `dev`, cite the repository together with
+the commit hash instead of the `v0.1.0` DOI.
 
 ### Maintainer Release Setup
 
-The repository is prepared for DOI-backed releases, but the GitHub-to-Zenodo
-link must be enabled once in the Zenodo UI:
+The repository is set up for DOI-backed releases through GitHub + Zenodo:
 
-1. Log into Zenodo with GitHub or ORCID and enable the `icaro-lab/MASE`
-   repository under GitHub integration settings.
-2. Create a GitHub release with a version tag such as `v0.1.0`.
-3. Zenodo will archive that release and mint a DOI for it.
-4. Add the minted DOI badge and DOI citation example to this README after the
-   first archived release exists.
+1. Create a GitHub release with a new version tag.
+2. Zenodo will archive that release and mint a new DOI for it.
+3. Update [`CITATION.cff`](CITATION.cff) and this README so the preferred
+   citation points at the latest archived release DOI.
 
 ## Project Status
 
