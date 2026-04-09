@@ -5,9 +5,7 @@
   "license": "Apache-2.0",
   "creators": [
     {
-      "name": "Prandi, Matteo",
-      "affiliation": "Icaro Lab",
-      "orcid": "0009-0002-9258-5589"
+      "name": "Icaro Lab"
     }
   ],
   "description": "MASE is experimentation infrastructure for studying AI agent interaction at scale.",
