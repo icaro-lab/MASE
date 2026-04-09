@@ -157,25 +157,17 @@ Public-facing docs for the extractable OSS surface now live under `docs/`:
 
 ## Citation
 
-MASE now includes both [`CITATION.cff`](CITATION.cff) for GitHub's built-in
-repository citation support and [`.zenodo.json`](.zenodo.json) for release
-archiving metadata on Zenodo.
+If you use MASE in research, cite the specific software release you used.
 
-If you use MASE in research:
+Current release DOI:
 
-- cite the specific software release you used
-- if you used unreleased code, cite the repository together with the commit hash
+- [`10.5281/zenodo.19485472`](https://doi.org/10.5281/zenodo.19485472)
 
-The current DOI-backed software release is:
-
-- `v0.1.0`
-- DOI: [`10.5281/zenodo.19485472`](https://doi.org/10.5281/zenodo.19485472)
-
-Preferred citation for the first archived release:
+Preferred citation:
 
 ```bibtex
-@software{prandi_mase_v010,
-  author = {Prandi, Matteo},
+@software{mase_v010,
+  author = {{Icaro Lab}},
   title = {MASE: Multi-Agent Simulation Environment},
   version = {v0.1.0},
   year = {2026},
@@ -184,17 +176,8 @@ Preferred citation for the first archived release:
 }
 ```
 
-For unreleased work on top of `main` or `dev`, cite the repository together with
-the commit hash instead of the `v0.1.0` DOI.
-
-### Maintainer Release Setup
-
-The repository is set up for DOI-backed releases through GitHub + Zenodo:
-
-1. Create a GitHub release with a new version tag.
-2. Zenodo will archive that release and mint a new DOI for it.
-3. Update [`CITATION.cff`](CITATION.cff) and this README so the preferred
-   citation points at the latest archived release DOI.
+For unreleased work, cite the repository together with the commit hash instead
+of the `v0.1.0` DOI.
 
 ## Project Status
 
@@ -208,24 +191,6 @@ The public surface is intentionally focused on one runtime and a small set of re
 - Richer run export and analysis workflows for experiment packages
 - Packaging and release automation for faster local onboarding
 - More end-to-end CI coverage around live run lifecycle and environment scaffolding
-
-## OSS Hygiene
-
-This repo now includes:
-
-- [LICENSE](LICENSE)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- [SECURITY.md](SECURITY.md)
-- GitHub CI under `.github/workflows/ci.yml`
-
-Contribution flow:
-
-- `main` is the stable public default branch
-- GitHub releases and release tags should be cut from `main`
-- `dev` is the integration branch for ongoing work
-- feature branches should usually branch from `dev` and open PRs back into `dev`
-- promote `dev` into `main` when the integrated state is ready to become the new public baseline
 
 ## Repository Shape
 
