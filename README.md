@@ -221,8 +221,11 @@ This repo now includes:
 
 Contribution flow:
 
-- `main` stays stable
-- contributions should branch from `dev` and open PRs back into `dev`
+- `main` is the stable public default branch
+- GitHub releases and release tags should be cut from `main`
+- `dev` is the integration branch for ongoing work
+- feature branches should usually branch from `dev` and open PRs back into `dev`
+- promote `dev` into `main` when the integrated state is ready to become the new public baseline
 
 ## Repository Shape
 
