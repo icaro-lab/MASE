@@ -154,6 +154,46 @@ Public-facing docs for the extractable OSS surface now live under `docs/`:
 - [`docs/run-and-inspect.md`](docs/run-and-inspect.md)
 - [`docs/troubleshooting.md`](docs/troubleshooting.md)
 
+## Citation
+
+MASE now includes both [`CITATION.cff`](CITATION.cff) for GitHub's built-in
+repository citation support and [`.zenodo.json`](.zenodo.json) for release
+archiving metadata on Zenodo.
+
+If you use MASE in research:
+
+- cite the specific software release you used
+- if you used unreleased code, cite the repository together with the commit hash
+
+Until the first DOI-backed release is published, the repo itself can be cited as
+software:
+
+```bibtex
+@software{prandi_mase,
+  author = {Prandi, Matteo},
+  title = {MASE: Multi-Agent Simulation Environment},
+  year = {2026},
+  institution = {Icaro Lab},
+  url = {https://github.com/icaro-lab/MASE},
+  note = {GitHub repository}
+}
+```
+
+After the first Zenodo-backed release, prefer citing the archived release DOI
+instead of the repository URL.
+
+### Maintainer Release Setup
+
+The repository is prepared for DOI-backed releases, but the GitHub-to-Zenodo
+link must be enabled once in the Zenodo UI:
+
+1. Log into Zenodo with GitHub or ORCID and enable the `icaro-lab/MASE`
+   repository under GitHub integration settings.
+2. Create a GitHub release with a version tag such as `v0.1.0`.
+3. Zenodo will archive that release and mint a DOI for it.
+4. Add the minted DOI badge and DOI citation example to this README after the
+   first archived release exists.
+
 ## Project Status
 
 MASE is currently in alpha.
