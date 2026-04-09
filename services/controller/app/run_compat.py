@@ -35,6 +35,7 @@ from app.run_config import (
     resolve_run_max_ticks,
     resolve_run_runtime_limit,
 )
+from app.run_frontend_ports import apply_frontend_port, reserve_frontend_port
 from app.run_launcher import RunLaunchConfig, run_launcher
 from app import run_public_ops
 from app.run_read_model import build_run_response
@@ -101,6 +102,37 @@ async def create_bound_run(
     )
     db.add(db_run)
     db.flush()
+    try:
+        launch_manifest = run_launcher.resolve_environment_launch(
+            str(normalized_env_config.get("environment_id") or "").strip() or environment_id
+        )
+        frontend_port = reserve_frontend_port(
+            db,
+            run_id=db_run.run_id,
+            environment_has_frontend=bool(launch_manifest.get("frontend_service")),
+        )
+        apply_frontend_port(
+            run_id=db_run.run_id,
+            environment_config=normalized_env_config,
+            snapshot=snapshot,
+            frontend_port=frontend_port,
+        )
+    except Exception as port_error:
+        db.rollback()
+        db_run.status = RunStatusEnum.FAILED.value
+        db_run.ended_at = datetime.utcnow()
+        emit_run_terminal_event(
+            db=db,
+            run=db_run,
+            terminal_status=RunStatusEnum.FAILED.value,
+            terminal_reason=f"Failed to reserve run frontend port: {port_error}",
+            terminal_source="create_run_frontend_port",
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to reserve run frontend port: {port_error}",
+        ) from port_error
     run_binding.upsert_run_binding(
         db,
         run=db_run,
@@ -161,6 +193,7 @@ async def create_bound_run(
         seed=request.seed,
         resolved_bundle_hash=resolved_bundle_hash,
         api_key=effective_api_key,
+        frontend_port=frontend_port,
     )
 
     async def mark_run_failed_and_stop(

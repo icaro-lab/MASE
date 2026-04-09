@@ -26,6 +26,24 @@ bash scripts/up_stack.sh
 bash scripts/verify_platform.sh
 ```
 
+## Branch Strategy
+
+- `main` is the stable release branch.
+- `dev` is the integration branch for active development.
+- Open pull requests against `dev`, not `main`.
+- Do not push feature work directly to `main`.
+
+Recommended flow:
+
+```bash
+git fetch origin
+git switch dev
+git pull --rebase origin dev
+git switch -c feat/<short-topic>
+```
+
+If you are contributing from a fork, open your PR from `feat/<short-topic>` into `icaro-lab/MASE:dev`.
+
 ## Main Contribution Paths
 
 ### New Environment
@@ -75,9 +93,11 @@ bash scripts/verify_platform.sh
 ## Pull Requests
 
 - Keep PRs scoped.
+- Base PRs on `dev`.
 - Describe the user-facing change clearly.
 - Include the commands you ran.
 - Call out any deferred work explicitly.
+- Rebase or merge from `origin/dev` before marking the PR ready.
 
 ## Design Rules
 

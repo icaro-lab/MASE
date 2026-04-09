@@ -64,6 +64,32 @@ PY
   printf '%s' "$value"
 }
 
+resolve_dotenv_path() {
+  local root="$1"
+  local candidate="$root/.env"
+  local common_dir=""
+  local shared_root=""
+
+  if [[ -f "$candidate" ]]; then
+    printf '%s' "$candidate"
+    return 0
+  fi
+
+  common_dir="$(git -C "$root" rev-parse --git-common-dir 2>/dev/null || true)"
+  if [[ -n "$common_dir" ]]; then
+    if [[ "$common_dir" != /* ]]; then
+      common_dir="$(cd "$root" && cd "$common_dir" && pwd -P)"
+    fi
+    shared_root="$(cd "$common_dir/.." 2>/dev/null && pwd -P || true)"
+    if [[ -n "$shared_root" && -f "$shared_root/.env" ]]; then
+      printf '%s' "$shared_root/.env"
+      return 0
+    fi
+  fi
+
+  printf '%s' "$candidate"
+}
+
 emit "COMPOSE_PROJECT_NAME" "$namespace"
 emit "HOST_PROJECT_ROOT" "$repo_root"
 emit "MASE_NETWORK_NAME" "${namespace}-network"
@@ -79,7 +105,7 @@ emit "GRAFANA_PORT" "${GRAFANA_PORT:-3001}"
 emit "AGENT_WORKER_IMAGE" "${AGENT_WORKER_IMAGE:-mase-agent-launcher:${namespace}}"
 emit "MASE_IMAGE_NAMESPACE" "${MASE_IMAGE_NAMESPACE:-$namespace}"
 
-dotenv_path="$repo_root/.env"
+dotenv_path="$(resolve_dotenv_path "$repo_root")"
 openrouter_api_key="$(
   resolve_optional_from_dotenv "OPENROUTER_API_KEY" "$dotenv_path" \
     || resolve_optional_from_dotenv "AGENT_LAUNCHER_OPENROUTER_API_KEY" "$dotenv_path" \

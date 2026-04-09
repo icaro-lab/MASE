@@ -487,6 +487,7 @@ async def test_heartbeat_endpoint_emits_prompt_llm_and_action_telemetry(
 ) -> None:
     emitted_action_types = []
     emitted_event_types = []
+    action_attempt_payloads = []
 
     async def _capture_record_action(*args, **kwargs):
         action_type = kwargs.get("action_type")
@@ -496,6 +497,8 @@ async def test_heartbeat_endpoint_emits_prompt_llm_and_action_telemetry(
         event_type = payload.get("event_type")
         if event_type:
             emitted_event_types.append(str(event_type))
+        if event_type == "action_attempt":
+            action_attempt_payloads.append(payload)
 
     monkeypatch.setattr(launcher_module, "record_action", _capture_record_action)
     monkeypatch.setattr(executor_module, "record_action", _capture_record_action)
@@ -520,6 +523,30 @@ async def test_heartbeat_endpoint_emits_prompt_llm_and_action_telemetry(
         "_dummy_chat_completion_messages",
         _local_dummy_messages,
     )
+
+    async def _fake_execute_direct_http(self, action, method, headers, body):
+        return {
+            "action": "http",
+            "success": True,
+            "action_type": "http_get",
+            "action_name": "local contract read",
+            "action_key": "http_get:local contract read",
+            "method": method.value,
+            "path": action.url,
+            "status_code": 200,
+            "request_id": "req-test",
+            "response": {
+                "status_code": 200,
+                "headers": {"content-type": "application/json"},
+                "body": {
+                    "contract": "ok",
+                    "items": [{"id": "p1", "score": 3}, {"id": "p2", "score": 5}],
+                },
+            },
+            "timestamp": "2026-01-01T00:00:00Z",
+        }
+
+    monkeypatch.setattr(executor_module.ActionExecutor, "_execute_direct_http", _fake_execute_direct_http)
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -550,6 +577,12 @@ async def test_heartbeat_endpoint_emits_prompt_llm_and_action_telemetry(
     assert "prompt_part" in emitted_action_types
     assert "llm_io" in emitted_action_types
     assert "action_attempt" in emitted_event_types
+    assert action_attempt_payloads
+    assert any(item.get("response_snapshot") is not None for item in action_attempt_payloads)
+    assert any(
+        (item.get("response_snapshot_meta") or {}).get("schema") == "mase.http_response_snapshot.v1"
+        for item in action_attempt_payloads
+    )
 
 
 class LegacyHeartbeatResponse(BaseModel):

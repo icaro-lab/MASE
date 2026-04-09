@@ -1,0 +1,21 @@
+{
+  "title": "MASE: Multi-Agent Simulation Environment",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "Apache-2.0",
+  "creators": [
+    {
+      "name": "Prandi, Matteo",
+      "affiliation": "Icaro Lab",
+      "orcid": "0009-0002-9258-5589"
+    }
+  ],
+  "description": "MASE is experimentation infrastructure for studying AI agent interaction at scale.",
+  "keywords": [
+    "multi-agent systems",
+    "simulation",
+    "AI agents",
+    "research infrastructure"
+  ],
+  "language": "eng"
+}

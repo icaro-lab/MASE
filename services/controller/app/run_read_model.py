@@ -16,6 +16,7 @@ from app.database import RunStatus as RunStatusEnum
 from app.models import Run, RunStatus
 from app.run_binding import build_run_context
 from app.run_config import resolve_run_runtime_limit
+from app.run_frontend_ports import extract_frontend_port
 from app.run_launcher import RunLaunchConfig, run_launcher
 
 
@@ -102,10 +103,15 @@ def resolve_run_service_urls(run: RunDB, db: Session) -> dict[str, str]:
     context = build_run_context(run, db)
     environment_id = resolve_environment_id_for_run(run, db)
     has_frontend = _context_has_frontend(context)
+    frontend_port = extract_frontend_port(
+        context.get("environment_config") if isinstance(context.get("environment_config"), dict) else {},
+        context.get("snapshot") if isinstance(context.get("snapshot"), dict) else {},
+    )
     try:
         return run_launcher.get_service_urls(
             run_id=run.run_id,
             environment_id=environment_id,
+            frontend_port=frontend_port,
         )
     except Exception as exc:
         logger.warning(
@@ -119,7 +125,10 @@ def resolve_run_service_urls(run: RunDB, db: Session) -> dict[str, str]:
             "agent_worker": settings.get_agent_worker_url(run.run_id, environment_id=environment_id),
         }
         if has_frontend:
-            fallback_urls["environment_frontend"] = run_launcher.get_environment_frontend_url(run.run_id)
+            fallback_urls["environment_frontend"] = run_launcher.get_environment_frontend_url(
+                run.run_id,
+                frontend_port=frontend_port,
+            )
         return fallback_urls
 
 
@@ -127,6 +136,10 @@ def build_restart_launch_config(run: RunDB, db: Session) -> RunLaunchConfig:
     context = build_run_context(run, db)
     environment_id = resolve_environment_id_for_run(run, db)
     effective_api_key = settings.openrouter_api_key or None
+    frontend_port = extract_frontend_port(
+        context.get("environment_config") if isinstance(context.get("environment_config"), dict) else {},
+        context.get("snapshot") if isinstance(context.get("snapshot"), dict) else {},
+    )
 
     return RunLaunchConfig(
         run_id=run.run_id,
@@ -137,6 +150,7 @@ def build_restart_launch_config(run: RunDB, db: Session) -> RunLaunchConfig:
             or None
         ),
         api_key=effective_api_key,
+        frontend_port=frontend_port,
     )
 
 
@@ -150,6 +164,10 @@ def build_run_response(
     context = build_run_context(run, db)
     runtime_limit_minutes, _ = resolve_run_runtime_limit(context.get("environment_config"))
     has_frontend = _context_has_frontend(context)
+    frontend_port = extract_frontend_port(
+        context.get("environment_config") if isinstance(context.get("environment_config"), dict) else {},
+        context.get("snapshot") if isinstance(context.get("snapshot"), dict) else {},
+    )
 
     service_urls = resolve_run_service_urls(run, db)
     environment_id = resolve_environment_id_for_run(run, db)
@@ -159,7 +177,10 @@ def build_run_response(
     )
     frontend_url = None
     if has_frontend:
-        frontend_url = service_urls.get("environment_frontend") or run_launcher.get_environment_frontend_url(run.run_id)
+        frontend_url = service_urls.get("environment_frontend") or run_launcher.get_environment_frontend_url(
+            run.run_id,
+            frontend_port=frontend_port,
+        )
     return Run(
         run_id=run.run_id,
         resolved_bundle_hash=run.resolved_bundle_hash,

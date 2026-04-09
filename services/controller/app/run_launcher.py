@@ -28,6 +28,7 @@ class RunLaunchConfig(BaseModel):
     seed: Optional[int] = Field(None, description="Random seed")
     resolved_bundle_hash: Optional[str] = Field(None, description="Bundle hash")
     api_key: Optional[str] = Field(None, description="LLM API key for agents")
+    frontend_port: Optional[int] = Field(None, description="Reserved host port for environment frontend")
 
 
 class RunLauncher:
@@ -124,9 +125,18 @@ class RunLauncher:
         return cls.FRONTEND_PORT_BASE + offset
 
     @classmethod
-    def get_environment_frontend_url(cls, run_id: str, namespace: Optional[str] = None) -> str:
+    def get_environment_frontend_url(
+        cls,
+        run_id: str,
+        namespace: Optional[str] = None,
+        frontend_port: Optional[int] = None,
+    ) -> str:
         """Get browser-facing frontend URL for a run."""
-        return f"http://localhost:{cls.get_environment_frontend_port(run_id, namespace=namespace)}"
+        resolved_port = int(frontend_port) if frontend_port is not None else cls.get_environment_frontend_port(
+            run_id,
+            namespace=namespace,
+        )
+        return f"http://localhost:{resolved_port}"
 
     @classmethod
     def default_environment_image_repository(cls, environment_id: str, asset_kind: str) -> str:
@@ -378,6 +388,7 @@ class RunLauncher:
         self,
         run_id: str,
         environment_id: Optional[str] = None,
+        frontend_port: Optional[int] = None,
     ) -> Dict[str, str]:
         """Get service URLs for a run.
 
@@ -406,7 +417,10 @@ class RunLauncher:
             urls["environment_frontend_internal"] = (
                 f"http://{frontend_service['container_prefix']}-{run_id}:{frontend_service['port']}"
             )
-            urls["environment_frontend"] = self.get_environment_frontend_url(run_id)
+            urls["environment_frontend"] = self.get_environment_frontend_url(
+                run_id,
+                frontend_port=frontend_port,
+            )
 
         return urls
 
@@ -431,7 +445,11 @@ class RunLauncher:
         environment_service = launch_config["environment_service"]
         agent_service = launch_config["agent_worker_service"]
         frontend_service = launch_config.get("frontend_service")
-        frontend_port = self.get_environment_frontend_port(run_id)
+        frontend_port = (
+            int(config.frontend_port)
+            if config.frontend_port is not None
+            else self.get_environment_frontend_port(run_id)
+        )
         resolved_llm_provider = (
             "dummy"
             if str(config.api_key or "").strip().lower() == "dummy"
@@ -450,7 +468,10 @@ class RunLauncher:
                         "ENV_STATE_KEY": state_key,
                         "ENV_STATE_PATH": state_path,
                         "ENV_FRONTEND_PORT": str(frontend_port),
-                        "ENV_FRONTEND_URL": self.get_environment_frontend_url(config.run_id),
+                        "ENV_FRONTEND_URL": self.get_environment_frontend_url(
+                            config.run_id,
+                            frontend_port=frontend_port,
+                        ),
                         "DATABASE_URL": database_url,
                         "SEED": str(config.seed) if config.seed else "",
                         "RESOLVED_BUNDLE_HASH": config.resolved_bundle_hash or "",
@@ -475,7 +496,10 @@ class RunLauncher:
                 state_key=state_key,
                 state_path=state_path,
                 frontend_port=frontend_port,
-                frontend_url=self.get_environment_frontend_url(config.run_id),
+                frontend_url=self.get_environment_frontend_url(
+                    config.run_id,
+                    frontend_port=frontend_port,
+                ),
             )
         )
 
@@ -690,7 +714,11 @@ class RunLauncher:
             state_key = f"{config.environment_id}:{config.run_id}"
             state_path = f"/app/data/state/{config.run_id}"
             database_url = f"sqlite:////app/data/state/{config.run_id}/environment.db"
-            frontend_port = self.get_environment_frontend_port(config.run_id)
+            frontend_port = (
+                int(config.frontend_port)
+                if config.frontend_port is not None
+                else self.get_environment_frontend_port(config.run_id)
+            )
             resolved_llm_provider = (
                 "dummy"
                 if str(config.api_key or "").strip().lower() == "dummy"
@@ -705,10 +733,16 @@ class RunLauncher:
                 "ENV_STATE_PATH": state_path,
                 "DATABASE_URL": database_url,
                 "ENV_FRONTEND_PORT": str(frontend_port),
-                "ENV_FRONTEND_URL": self.get_environment_frontend_url(config.run_id),
+                "ENV_FRONTEND_URL": self.get_environment_frontend_url(
+                    config.run_id,
+                    frontend_port=frontend_port,
+                ),
                 "ENV_CONTAINER_PREFIX": config.environment_id,
                 "ENVIRONMENT_FRONTEND_PORT": str(frontend_port),
-                "ENVIRONMENT_FRONTEND_URL": self.get_environment_frontend_url(config.run_id),
+                "ENVIRONMENT_FRONTEND_URL": self.get_environment_frontend_url(
+                    config.run_id,
+                    frontend_port=frontend_port,
+                ),
                 "ENVIRONMENT_NAME": config.environment_id,
                 "SEED": str(config.seed) if config.seed else "",
                 "RESOLVED_BUNDLE_HASH": config.resolved_bundle_hash or "",
@@ -723,7 +757,10 @@ class RunLauncher:
                     state_key=state_key,
                     state_path=state_path,
                     frontend_port=frontend_port,
-                    frontend_url=self.get_environment_frontend_url(config.run_id),
+                    frontend_url=self.get_environment_frontend_url(
+                        config.run_id,
+                        frontend_port=frontend_port,
+                    ),
                 )
             )
             
