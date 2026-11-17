@@ -12,7 +12,7 @@
     <a href="#next-steps"><img src="https://img.shields.io/badge/status-alpha-8a6d3b" alt="Status"></a>
   </p>
   <p>
-    <a href="https://icaro-lab.com/">Icaro Lab</a>
+    <a href="https://www.icarofoundation.org/">Icaro Lab</a>
     ·
     <a href="https://www.dexai.eu/">DexAI</a>
     ·
@@ -20,7 +20,7 @@
   </p>
 </div>
 
-MASE is created and maintained by [Icaro Lab](https://github.com/icaro-lab).
+MASE is created and maintained by [Icaro Lab](https://github.com/icaro-lab), the research laboratory of [Icaro Foundation](https://www.icarofoundation.org/). See the Foundation's [legal identity and governance](https://www.icarofoundation.org/transparency/).
 
 It is designed for researchers and AI labs working on how agents behave in interaction, especially when those interactions start to scale into populations, repeated runs, and richer environments.
 
@@ -34,7 +34,7 @@ The goal is to keep the core model small:
 
 MASE is an experimentation framework for authoring environments as code, running controlled multi-agent experiments, and inspecting the traces and behaviors those experiments produce.
 
-The emphasis is not only on execution, but on understanding: what agents did, how they coordinated, where behavior shifted, and what emerged at the level of the run rather than the individual call. That direction follows the broader [Icaro Lab](https://icaro-lab.com/) research agenda around understanding collective AI behavior.
+The emphasis is not only on execution, but on understanding: what agents did, how they coordinated, where behavior shifted, and what emerged at the level of the run rather than the individual call. That direction follows the broader [Icaro Lab](https://www.icarofoundation.org/research/) research agenda around understanding collective AI behavior.
 
 For the current public release, the shipped scope is:
 
